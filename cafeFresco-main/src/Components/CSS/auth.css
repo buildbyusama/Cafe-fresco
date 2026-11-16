@@ -1,0 +1,379 @@
+/* Login / signup / forgot / reset (landing tokens from landing.css) */
+.fa-auth {
+    min-height: calc(100vh - 70px);
+    display: grid;
+    place-items: center;
+    padding: 34px 16px 50px !important;
+}
+
+.fa-auth-card {
+    width: 100%;
+    max-width: 1040px;
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    background: #fff;
+    border-radius: 34px;
+    box-shadow: 0 30px 70px rgba(120, 60, 10, 0.16);
+    overflow: hidden;
+    min-height: 600px;
+}
+
+/* brand panel */
+.fa-brand {
+    position: relative;
+    background: linear-gradient(160deg, var(--cf-red) 0%, var(--cf-red-dark) 70%);
+    color: #fff;
+    padding: 40px 40px 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.fa-brand::before {
+    content: '';
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    background: var(--cf-yellow);
+    opacity: 0.18;
+    right: -110px;
+    top: -110px;
+}
+
+.fa-brand-logo {
+    display: inline-block;
+    background: #fff;
+    border-radius: 16px;
+    padding: 8px 14px;
+    align-self: flex-start;
+    position: relative;
+}
+
+.fa-brand-logo img {
+    height: 40px;
+    display: block;
+}
+
+.fa-brand h2 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-weight: 400;
+    font-size: 2.5rem;
+    line-height: 1.1;
+    margin: 34px 0 18px;
+    position: relative;
+}
+
+.fa-brand h2 span {
+    color: var(--cf-yellow);
+}
+
+.fa-brand ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 10px;
+    position: relative;
+    font-size: 0.92rem;
+}
+
+.fa-brand li i {
+    color: var(--cf-yellow);
+    margin-right: 6px;
+}
+
+.fa-brand-art {
+    position: relative;
+    margin-top: auto;
+    height: 290px;
+}
+
+.fa-brand-circle {
+    position: absolute;
+    left: 50%;
+    bottom: -120px;
+    transform: translateX(-50%);
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe27a, var(--cf-yellow) 60%, #f6a800);
+}
+
+.fa-brand-art img {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    height: 280px;
+    object-fit: contain;
+}
+
+/* form side */
+.fa-form {
+    padding: 48px 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.fa-mobile-logo {
+    display: none;
+}
+
+.fa-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-weight: 400;
+    font-size: 2.3rem;
+    line-height: 1.1;
+    margin: 0;
+}
+
+.fa-sub {
+    color: var(--cf-muted);
+    margin: 8px 0 26px;
+    font-size: 0.95rem;
+}
+
+.fa-fields {
+    display: grid;
+    gap: 16px;
+}
+
+.fa-field {
+    display: grid;
+    gap: 6px;
+}
+
+.fa-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.fa-label-row label {
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.fa-label-row a {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--cf-red) !important;
+}
+
+.fa-input {
+    position: relative;
+}
+
+.fa-input > i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--cf-muted);
+}
+
+.fa-input input {
+    width: 100%;
+    height: 52px;
+    border-radius: 14px;
+    border: 1.5px solid var(--cf-line);
+    background: var(--cf-cream);
+    padding: 0 48px 0 46px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+
+.fa-input input:focus {
+    border-color: var(--cf-yellow);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(253, 190, 17, 0.22);
+}
+
+.fa-input input.is-invalid {
+    border-color: #f1a7a7;
+    background: #fff7f7;
+}
+
+.fa-eye {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--cf-muted);
+}
+
+.fa-eye:hover {
+    background: var(--cf-cream-2);
+    color: var(--cf-ink);
+}
+
+.fa-field .invalid-feedback {
+    color: #b42318;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.fa-hint {
+    color: var(--cf-muted);
+    font-size: 0.78rem;
+}
+
+.fa-rules {
+    list-style: none;
+    padding: 0;
+    margin: 2px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font-size: 0.78rem;
+    color: var(--cf-muted);
+}
+
+.fa-rules li.ok {
+    color: #1e7a45;
+    font-weight: 600;
+}
+
+.fa-error {
+    background: #fdecec;
+    color: #b42318;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 0.86rem;
+    font-weight: 500;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.fa-submit {
+    width: 100%;
+    height: 54px;
+    font-size: 1rem;
+    margin-top: 8px;
+}
+
+.fa-submit:disabled {
+    background: #c9c1b8 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    cursor: not-allowed;
+}
+
+.fa-foot {
+    margin-top: 22px;
+    text-align: center;
+    color: var(--cf-muted);
+    font-size: 0.9rem;
+}
+
+.fa-foot a {
+    color: var(--cf-red) !important;
+    font-weight: 700;
+}
+
+/* success / status panels */
+.fa-status {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.fa-status > i {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 2.1rem;
+    margin: 0 auto 16px;
+    animation: fcPop 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+
+.fa-status > i.ok {
+    background: #e8f6ee;
+    color: #2e9a57;
+}
+
+.fa-status > i.bad {
+    background: #fdecec;
+    color: var(--cf-red);
+}
+
+.fa-status h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+.fa-status p {
+    color: var(--cf-muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin: 6px auto 20px;
+    max-width: 360px;
+}
+
+@keyframes fcPop {
+    from { transform: scale(0.4); opacity: 0; }
+}
+
+@media (max-width: 860px) {
+    .fa-auth-card {
+        grid-template-columns: 1fr;
+        min-height: 0;
+        max-width: 520px;
+    }
+
+    .fa-brand {
+        display: none;
+    }
+
+    .fa-mobile-logo {
+        display: block;
+        margin-bottom: 18px;
+    }
+
+    .fa-mobile-logo img {
+        height: 42px;
+    }
+
+    .fa-form {
+        padding: 30px 24px 34px;
+    }
+
+    .fa-title {
+        font-size: 2rem;
+    }
+}
+
+/* eye button: centre the single icon and ignore global button decorations */
+.fa-eye {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    line-height: 1;
+}
+
+.fa-eye::before,
+.fa-eye::after {
+    content: none !important;
+}
+
+/* round dish photo framed by the yellow circle, like the home hero */
+.fa-brand-art img {
+    width: 220px;
+    height: 220px;
+    bottom: 24px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 8px solid #fff;
+    box-shadow: 0 22px 40px rgba(80, 10, 0, 0.35);
+}

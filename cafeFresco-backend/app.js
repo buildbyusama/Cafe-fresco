@@ -1,0 +1,130 @@
+require('dotenv').config();
+const { validateEnv, corsOrigins } = require('./config/env');
+validateEnv();
+
+const cookieParser = require('cookie-parser');
+const express = require('express');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const path = require('path');
+const app = express();
+const userRoutes = require('./routes/users');
+const adminRoutes = require('./routes/admin')
+const productRoutes = require('./routes/products')
+const categoryRoutes = require('./routes/category')
+const reviewRoutes = require('./routes/review');
+const cartRoutes = require('./routes/cart');
+const wishRoutes = require('./routes/wishlist')
+const paymentRoutes = require('./routes/payment')
+const orderRoutes = require('./routes/order');
+const earningRoutes = require('./routes/dashboard')
+const discount = require('./routes/discountCode')
+const employee = require('./routes/employee')
+const department = require('./routes/department')
+const distributer = require('./routes/distributer')
+const supplier = require('./routes/supplier');
+const connectDB = require('./config/db');
+
+const PORT = process.env.PORT || 3000;
+const isDev = process.env.NODE_ENV === 'development';
+const allowedOrigins = corsOrigins();
+
+app.set('trust proxy', 1);
+
+// Security headers; images are fetched by the shop and dashboard from other origins
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            const err = new Error('CORS Not Allowed');
+            err.status = 403;
+            callback(err);
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+}));
+
+// Static images (served once, here — not again inside routers)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// General limit for API traffic (static files above are not counted)
+app.use(rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: Number(process.env.API_RATE_LIMIT || 600),
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => res.status(429).json({ message: 'Too many requests, please slow down.' }),
+}));
+
+// Stripe needs the raw body to verify the signature, so this route comes before express.json
+app.post('/stripe/webhook', express.raw({ type: 'application/json' }), paymentRoutes.webhook);
+
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(cookieParser());
+
+app.get('/', (req, res) => {
+    res.send('Server is running');
+});
+
+app.use('/user', userRoutes);
+app.use('/admin', adminRoutes);
+app.use('/category', categoryRoutes)
+app.use('/product', productRoutes);
+app.use('/review', reviewRoutes);
+app.use('/cart', cartRoutes);
+app.use('/wishlist', wishRoutes);
+app.use('/stripe', paymentRoutes)
+app.use('/order', orderRoutes);
+// /user-Interest removed: unused, unauthenticated (anyone could read or write any user's history), unescaped regex
+app.use('/api', earningRoutes)
+app.use('/discount', discount)
+app.use('/employee', employee);
+app.use('/department', department);
+app.use('/supplier', supplier);
+app.use('/distributer', distributer);
+
+// Unknown routes → JSON 404 (never an HTML page)
+app.use((req, res) => {
+    res.status(404).json({ message: 'Not found' });
+});
+
+// Central error handler (SHARED_DECISIONS D8): {message}; internals only in development
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+    let status = err.status || err.statusCode || 500;
+    let message = err.expose ? err.message : 'Something went wrong. Please try again.';
+
+    if (err.type === 'entity.parse.failed') { status = 400; message = 'Malformed JSON in request body'; }
+    else if (err.type === 'entity.too.large') { status = 413; message = 'Request body is too large'; }
+    else if (err.name === 'MulterError') { status = 400; message = err.code === 'LIMIT_FILE_SIZE' ? `Image is too large (max ${process.env.UPLOAD_MAX_MB || 2} MB)` : err.message; }
+    else if (err instanceof mongoose.Error.CastError) { status = 400; message = `Invalid ${err.path}`; }
+    else if (err instanceof mongoose.Error.ValidationError) { status = 400; message = Object.values(err.errors)[0]?.message || 'Invalid data'; }
+    else if (err.message === 'CORS Not Allowed') { status = 403; message = 'Origin not allowed'; }
+
+    if (status >= 500) console.error('Unhandled error:', err);
+    res.status(status).json({ message, ...(isDev && status >= 500 ? { detail: err.message } : {}) });
+});
+
+// Connect first, then accept traffic (requests no longer hang during startup)
+const start = async () => {
+    await connectDB();
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+    });
+};
+
+if (process.env.VERCEL) {
+    // Serverless: Vercel calls the exported app; connect once per instance
+    connectDB();
+} else {
+    start();
+}
+
+module.exports = app;

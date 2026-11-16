@@ -53,6 +53,9 @@ const productSchema = mongoose.Schema({
     allergens: { type: [String], default: [] },
     // the allergen list is shown to customers (and the assistant) only once staff have checked it
     allergensVerified: { type: Boolean, default: false },
+    // Semantic search vector (services/ai/embeddings.js). Internal: never sent to clients.
+    embedding: { type: [Number], select: false },
+    embeddingHash: { type: String, select: false },
     createdAt: {
         type: Date,
         default: Date.now,

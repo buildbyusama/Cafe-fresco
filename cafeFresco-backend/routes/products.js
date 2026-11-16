@@ -15,6 +15,10 @@ const Cart = require('../models/cart');
 const Wishlist = require('../models/wishlist');
 const Review = require('../models/review');
 const { escapeRegex } = require('../utils/validation');
+const { scheduleEmbed, semanticSearch, bust: bustSearch } = require('../services/ai/embeddings');
+const { createLimiter } = require('../middleware/loginLimiter');
+
+const searchLimiter = createLimiter({ windowMs: 60 * 1000, max: 30, message: 'Too many searches, please slow down.' });
 
 
 
@@ -132,6 +136,7 @@ router.post('/add', isAdmin, authorizeRoles("editor", "manager", "admin"), uploa
         saved.inventory = inventory._id;
         await saved.save();
 
+        scheduleEmbed(saved._id);
         res.status(201).json({ message: "Product added successfully", product: saved });
     } catch (error) {
         // Never leave a product without inventory
@@ -180,6 +185,7 @@ router.put('/update/:id', isAdmin, authorizeRoles("editor", "manager", "admin"),
         // Old image goes once the new state is saved
         if (updates.image !== undefined && existingProduct.image && existingProduct.image !== updates.image) removeImage(existingProduct.image);
 
+        scheduleEmbed(id);
         res.status(200).json({ message: "Product updated successfully", product: updatedProduct });
 
     } catch (error) {
@@ -226,6 +232,7 @@ router.delete('/delete/:id', isAdmin, authorizeRoles("manager", "admin"), async 
             Wishlist.updateMany({ items: id }, { $pull: { items: id } }),
         ]);
         removeImage(deletedProduct.image);
+        bustSearch();
 
         res.status(200).json({ message: "Product deleted" });
 
@@ -370,6 +377,20 @@ router.get("/fetch", optionalAdmin, async (req, res) => {
 
 
 // Distinct tags of shop-visible products with counts (filters, dashboard autocomplete)
+// Smart search ("something cheesy under 5"): semantic when AI is available, keyword otherwise
+router.get('/search', searchLimiter, async (req, res) => {
+    try {
+        const q = String(req.query.q || '').trim();
+        if (q.length < 2 || q.length > 200) return res.status(400).json({ message: 'Search must be 2–200 characters' });
+        const limit = Math.min(20, Math.max(1, parseInt(req.query.limit) || 8));
+        const { products, mode } = await semanticSearch(q, { limit });
+        res.json({ mode, products: await withStock(products) });
+    } catch (error) {
+        console.error('Search failed:', error);
+        res.status(500).json({ message: 'Search failed' });
+    }
+});
+
 router.get('/tags', async (req, res) => {
     try {
         const rows = await Product.aggregate([

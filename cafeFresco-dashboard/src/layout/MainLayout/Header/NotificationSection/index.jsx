@@ -2,6 +2,7 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../../../../api/client';
 import { useNotify } from '../../../../contexts/NotifyContext';
+import { canAccessUrl } from '../../../../config/permissions';
 import { MainContext } from '../../../../views/context';
 
 // material-ui
@@ -113,7 +114,11 @@ export default function NotificationSection() {
         .then((data) => typeof data?.unreadCount === 'number' && setUnreadCount(data.unreadCount))
         .catch(() => fetchNotifications(true));
     }
-    if (n.type === 'order') {
+    // alerts carry their own page; follow it only if this admin's role can open it
+    if (n.link && canAccessUrl(adminRole, n.link.split('?')[0])) {
+      setOpen(false);
+      navigate(n.link);
+    } else if (n.type === 'order' || (n.type === 'payment_issue' && n.orderId)) {
       setOpen(false);
       navigate(n.orderId ? `/admin/all-order?q=${n.orderId}` : '/admin/all-order');
     } else if (n.type === 'permission' && adminRole === 'admin') {

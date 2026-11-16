@@ -7,6 +7,7 @@ const ChatMessage = require('../../models/chatMessage');
 const { chat, flagged, status, AiError } = require('./client');
 const tools = require('./tools');
 const fallback = require('./fallback');
+const { aiProblem } = require('../alerts');
 const { TZ, now } = require('../stats');
 
 const SYSTEM = fs.readFileSync(path.join(__dirname, 'prompts', 'system.v1.txt'), 'utf8');
@@ -154,6 +155,7 @@ async function handleMessage({ sessionId, text, ctx, emit, signal }) {
             } catch (err) {
                 if (signal?.aborted) throw err;
                 if (!(err instanceof AiError)) console.error('Chat turn failed, using rule-based answer:', err);
+                else aiProblem(err.code); // outage / budget → one dashboard alert (deduplicated)
                 // A7: never a blank reply — rule-based answer from the same tools
                 source = 'fallback';
                 if (content) emit('reset', {}); // the browser drops the half-streamed AI text

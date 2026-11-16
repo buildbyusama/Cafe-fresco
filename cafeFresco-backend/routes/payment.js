@@ -112,6 +112,7 @@ const webhook = async (req, res) => {
                 await markOrderPaid(order._id, intent);
             } else if (order) {
                 console.error(`Webhook: amount/currency mismatch for order ${order._id}`);
+                require('../services/alerts').alert({ type: 'payment_issue', message: `Stripe reported a payment for order #${String(order._id).slice(-6).toUpperCase()} that doesn't match its total. Check it in Stripe before delivering.`, orderId: order._id, key: `mismatch:${intent.id}`, windowMs: 24 * 60 * 60 * 1000 });
             }
         }
         res.json({ received: true });

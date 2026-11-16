@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useSearchParams } from 'react-router-dom';
 import Chart from 'react-apexcharts';
 import { Alert, Box, Button, Divider, Drawer, IconButton, MenuItem, Paper, Skeleton, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { IconMessageCircle, IconMoodHappy, IconRobot, IconCoin, IconAlertTriangle, IconX, IconUserQuestion } from '@tabler/icons-react';
@@ -55,6 +56,17 @@ export default function AiInsights() {
         setOpen({ loading: true });
         apiFetch(`/chat/admin/sessions/${id}`).then(setOpen).catch((e) => setOpen({ error: e.message }));
     };
+
+    // a hand-off notification links here with ?session=<id>: open that conversation
+    const [params, setParams] = useSearchParams();
+    useEffect(() => {
+        const sid = params.get('session');
+        if (sid) {
+            openTranscript(sid);
+            params.delete('session');
+            setParams(params, { replace: true });
+        }
+    }, [params]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const createFaq = (question) => navigate(`/admin/ai-knowledge?new=${encodeURIComponent(question)}`);
 

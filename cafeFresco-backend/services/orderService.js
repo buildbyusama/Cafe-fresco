@@ -186,7 +186,7 @@ async function markOrderPaid(orderId, intent) {
     if (updated) {
         if (updated.orderStatus === 'cancelled') {
             // the card was charged after the order was cancelled (stock already went back): a person must refund it
-            notifyAdmins('System', `Order #${String(updated._id).slice(-6).toUpperCase()} was paid after it was cancelled — refund it in Stripe`, updated._id);
+            require('./alerts').alert({ type: 'payment_issue', message: `Order #${String(updated._id).slice(-6).toUpperCase()} was paid after it was cancelled — refund it in Stripe`, orderId: updated._id, key: `paid-after-cancel:${updated._id}`, windowMs: 365 * 24 * 60 * 60 * 1000 });
         } else {
             mailOrder(updated, updated.userId);
         }

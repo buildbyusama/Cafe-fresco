@@ -14,12 +14,17 @@ module.exports = [
             const contact = [c.phone && `phone ${c.phone}`, c.email && `email ${c.email}`].filter(Boolean).join(' or ');
             const session = ctx.sessionId ? await ChatSession.findById(ctx.sessionId) : null;
             const recent = session?.escalatedAt && Date.now() - session.escalatedAt.getTime() < 10 * 60 * 1000;
+            // guest spam can open many chats: at most 20 hand-off alerts an hour in total
+            const flood = (await Notify.countDocuments({ type: 'chat_escalation', time: { $gte: new Date(Date.now() - 60 * 60 * 1000) } })) >= 20;
             if (session && !recent) {
                 await ChatSession.updateOne({ _id: session._id }, { $set: { escalated: true, escalatedAt: new Date() } });
+            }
+            if (session && !recent && !flood) {
                 await Notify.create({
                     name: ctx.userName || 'Customer',
                     message: `${ctx.userName || 'A guest'} asked for a person in chat: ${String(reason || '').replace(/\s+/g, ' ').slice(0, 140)}`,
                     type: 'chat_escalation',
+                    link: `/admin/ai-insights?session=${session._id}`,
                 });
                 // optional email (Store Info → escalation email); never blocks the reply
                 if (s.chatbot?.escalationEmail) {

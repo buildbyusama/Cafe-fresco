@@ -7,7 +7,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 // assets
-import { IconShieldCheck, IconShoppingBag, IconX } from '@tabler/icons-react';
+import { IconAlertTriangle, IconCreditCard, IconMessageCircle, IconSettings, IconShieldCheck, IconShoppingBag, IconX } from '@tabler/icons-react';
 
 // "just now", "5 min ago", "3 h ago", "Yesterday", "2 d ago", then a date
 export function timeAgo(value) {
@@ -28,7 +28,12 @@ export function timeAgo(value) {
 const KIND = {
     order: { icon: IconShoppingBag, bg: '#FFF3D1', color: '#C98A00' },
     cancel: { icon: IconX, bg: '#FDECEC', color: '#D32F2F' },
-    permission: { icon: IconShieldCheck, bg: '#F1ECFA', color: '#6B4FB3' }
+    permission: { icon: IconShieldCheck, bg: '#F1ECFA', color: '#6B4FB3' },
+    chat_escalation: { icon: IconMessageCircle, bg: '#E7F0FD', color: '#1E5BB8' },
+    ai_error: { icon: IconAlertTriangle, bg: '#FDECEC', color: '#D32F2F' },
+    system_error: { icon: IconAlertTriangle, bg: '#FDECEC', color: '#D32F2F' },
+    payment_issue: { icon: IconCreditCard, bg: '#FDECEC', color: '#D32F2F' },
+    settings: { icon: IconSettings, bg: '#F3F2EE', color: '#6B6B6B' }
 };
 
 // ==============================|| NOTIFICATION LIST ||============================== //
@@ -37,7 +42,7 @@ export default function NotificationList({ notifications, onOpen }) {
     return (
         <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0 }}>
             {notifications.map((n) => {
-                const kind = n.type === 'permission' ? 'permission' : /cancel/i.test(n.message || '') ? 'cancel' : 'order';
+                const kind = KIND[n.type] && n.type !== 'order' ? n.type : /cancel/i.test(n.message || '') ? 'cancel' : 'order';
                 const k = KIND[kind];
                 const Icon = k.icon;
                 return (

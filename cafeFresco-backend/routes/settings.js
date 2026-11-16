@@ -32,7 +32,7 @@ router.put('/', isAdmin, authorizeRoles('admin'), async (req, res) => {
         if (parsed.fields) return res.status(400).json({ message: Object.values(parsed.fields)[0], fields: parsed.fields });
         if (!Object.keys(parsed.value).length) return res.status(400).json({ message: 'Nothing to update' });
         const { _id, __v, key, ...saved } = await saveSettings(parsed.value, req.admin.userId);
-        notifyModel.create({ name: req.admin.name, message: `${req.admin.name} updated the store info`, type: 'settings' }).catch(() => {});
+        notifyModel.create({ name: req.admin.name, message: `${req.admin.name} updated the store info`, type: 'settings', link: '/admin/store-info' }).catch(() => {});
         res.json({ message: 'Store info saved', settings: saved });
     } catch (err) {
         console.error('Settings save failed:', err);

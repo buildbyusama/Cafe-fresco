@@ -10,6 +10,7 @@ const chatSessionSchema = new mongoose.Schema({
     lastAt: { type: Date, default: Date.now },
     messageCount: { type: Number, default: 0 },
     escalated: { type: Boolean, default: false },
+    escalatedAt: { type: Date, default: null },
     language: { type: String, default: null }, // 'en' | 'ur' | 'roman-ur' (last detected)
     summary: { type: String, default: '' }, // running summary of older turns (keeps the prompt short)
     summarizedUpTo: { type: Number, default: 0 },

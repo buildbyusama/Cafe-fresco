@@ -71,7 +71,9 @@ app.use(rateLimit({
 // Stripe needs the raw body to verify the signature, so this route comes before express.json
 app.post('/stripe/webhook', express.raw({ type: 'application/json' }), paymentRoutes.webhook);
 
-app.use(express.json({ limit: '1mb' }));
+// /chat parses its own smaller (4 KB) bodies
+const jsonBody = express.json({ limit: '1mb' });
+app.use((req, res, next) => (req.path.startsWith('/chat/') ? next() : jsonBody(req, res, next)));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // The secret signs the guest cookie (cf_anon) used for recommendations and guest chat
 app.use(cookieParser(require('./config/env').cookieSecret()));
@@ -105,6 +107,7 @@ app.use('/distributer', distributer);
 app.use('/settings', settingsRoutes);
 app.use('/events', require('./routes/events'));
 app.use('/reco', require('./routes/reco'));
+app.use('/chat', require('./routes/chat'));
 
 // Unknown routes → JSON 404 (never an HTML page)
 app.use((req, res) => {

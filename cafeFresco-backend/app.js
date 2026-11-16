@@ -1,4 +1,6 @@
 require('dotenv').config();
+const { logger, routeConsole, requestContext } = require('./utils/logger');
+routeConsole();
 const { validateEnv, corsOrigins } = require('./config/env');
 validateEnv();
 
@@ -32,6 +34,9 @@ const isDev = process.env.NODE_ENV === 'development';
 const allowedOrigins = corsOrigins();
 
 app.set('trust proxy', 1);
+
+// Request id + access log first, so every later line (and error) is traceable
+app.use(requestContext);
 
 // Security headers; images are fetched by the shop and dashboard from other origins
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -73,6 +78,12 @@ app.get('/', (req, res) => {
     res.send('Server is running');
 });
 
+// For uptime monitors: no secrets, just whether the pieces are up
+app.get('/health', (req, res) => {
+    const db = mongoose.connection.readyState === 1 ? 'up' : 'down';
+    res.status(db === 'up' ? 200 : 503).json({ status: db === 'up' ? 'ok' : 'degraded', db, ai: require('./services/ai/client').status(), uptime: Math.round(process.uptime()) });
+});
+
 app.use('/user', userRoutes);
 app.use('/admin', adminRoutes);
 app.use('/category', categoryRoutes)
@@ -109,14 +120,14 @@ app.use((err, req, res, next) => {
     else if (err.message === 'CORS Not Allowed') { status = 403; message = 'Origin not allowed'; }
 
     if (status >= 500) console.error('Unhandled error:', err);
-    res.status(status).json({ message, ...(isDev && status >= 500 ? { detail: err.message } : {}) });
+    res.status(status).json({ message, ...(status >= 500 ? { reqId: req.id } : {}), ...(isDev && status >= 500 ? { detail: err.message } : {}) });
 });
 
 // Connect first, then accept traffic (requests no longer hang during startup)
 const start = async () => {
     await connectDB();
     app.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
+        logger.info({ port: PORT }, `Server running on http://localhost:${PORT}`);
     });
 };
 

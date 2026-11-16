@@ -66,3 +66,12 @@ admin `admin@cafefresco.local` / `ChangeMe@12345` · manager `manager@cafefresco
 
 - The Gmail app password was rejected by Google (`534 WebLoginRequired`). Create a new app password in `.env` `EMAIL_PASSWORD`. Mail sending fails until then; orders still succeed.
 - The customer login (`routes/users.js`) still uses the default shared `loginLimiter` and its own cookie code. Main Steps 1.x should switch it to `createLimiter` and `userCookieOptions()`.
+
+## AI master plan (docs/AI_MASTER_PLAN.md)
+
+Tests live in `FYP/tests` (`npm i` once, then `node <file>.js`). `regression.js` is the core suite run after every step.
+
+| Step | Projects | Notes | Test |
+|---|---|---|---|
+| 0.1 | B | `services/ai/client.js`: streaming chat with tools, embeddings, moderation; 20 s timeout, one retry on 429/5xx; daily token budget (`aiUsage`, APP_TZ day); `AI_MOCK` offline mock (`services/ai/mock`). Defaults `gpt-4o-mini` / `text-embedding-3-small` in `config/env.js` only. | `ai01.js` |
+| 0.2 | B | `utils/logger.js` (pino JSON, redaction, reqId via AsyncLocalStorage); console.error/warn routed through it; `X-Request-Id` in/out; access log (reset tokens masked); `GET /health`; 500 bodies carry `reqId`. | `log02.js`, `regression.js` |

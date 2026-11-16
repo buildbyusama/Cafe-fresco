@@ -37,7 +37,7 @@ const { model, bcrypt, URL, ADMIN, check, connect, done, tag } = require('./lib'
         check('top questions include the repeated one (3 times)', s.topQuestions.some((x) => x.question === q && x.count >= 3));
         check('unanswered list shows the customer question', s.unansweredList.some((x) => x.question === q && x.sessionId === String(s1._id)));
         check('tool usage counted', s.tools.some((x) => x.tool === 'search_knowledge'));
-        check('7 days of per-day counts', s.perDay.length === 7 && s.perDay.at(-1).messages >= 3);
+        check('7 days of per-day counts (seeded questions counted; may span midnight)', s.perDay.length === 7 && s.perDay.slice(-2).reduce((n, x) => n + x.messages, 0) - base.perDay.slice(-2).reduce((n, x) => n + x.messages, 0) === 3);
         check('30-day range works', (await (await ad.get('/chat/admin/stats?range=30d')).json()).perDay.length === 30);
 
         const list = await (await ad.get('/chat/admin/sessions?filter=escalated')).json();

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import productContext from '../Context/ProductContext';
 import { apiFetch } from '../api';
-import { CONTACT_INFO } from '../config/site';
+import useStoreSettings, { hoursSummary } from '../hooks/useStoreSettings';
 import './CSS/landing.css';
 import './CSS/menu.css';
 import './CSS/pages.css';
@@ -35,6 +35,7 @@ const FAQ = [
 
 const Contact = () => {
     const { playSound, user, authStatus } = useContext(productContext);
+    const store = useStoreSettings();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState(EMPTY);
     const [errors, setErrors] = useState({});
@@ -106,11 +107,13 @@ const Contact = () => {
         </div>
     );
 
+    const contact = store?.contact || {};
+    const hours = hoursSummary(store?.hours);
     const info = [
-        CONTACT_INFO.phone && ['bi-telephone', 'Call us', CONTACT_INFO.phone, `tel:${CONTACT_INFO.phone.replace(/\s/g, '')}`, '#3E9B48'],
-        CONTACT_INFO.email && ['bi-envelope', 'Email', CONTACT_INFO.email, `mailto:${CONTACT_INFO.email}`, '#1C8C9E'],
-        CONTACT_INFO.address && ['bi-geo-alt', 'Visit us', CONTACT_INFO.address, CONTACT_INFO.mapUrl || null, '#E8262B'],
-        CONTACT_INFO.hours && ['bi-clock', 'Opening hours', CONTACT_INFO.hours, null, '#F2B705']
+        contact.phone && ['bi-telephone', 'Call us', contact.phone, `tel:${contact.phone.replace(/s/g, '')}`, '#3E9B48'],
+        contact.email && ['bi-envelope', 'Email', contact.email, `mailto:${contact.email}`, '#1C8C9E'],
+        contact.address && ['bi-geo-alt', 'Visit us', contact.address, contact.mapUrl || null, '#E8262B'],
+        hours && ['bi-clock', store.openNow === true ? 'Open now' : store.openNow === false ? 'Closed now' : 'Opening hours', hours, null, '#F2B705']
     ].filter(Boolean);
 
     return (

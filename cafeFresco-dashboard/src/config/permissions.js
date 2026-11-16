@@ -19,6 +19,7 @@ export const routeRoles = {
     departments: ADMIN_MANAGER,
     suppliers: ADMIN_MANAGER,
     distributors: ADMIN_MANAGER,
+    settings: ADMIN,
     accessDenied: ALL
 };
 
@@ -59,7 +60,8 @@ const urlRouteKeys = [
     ['/admin/departments', 'departments'],
     ['/admin/supplier', 'suppliers'],
     ['/admin/suppliers', 'suppliers'],
-    ['/admin/distributors', 'distributors']
+    ['/admin/distributors', 'distributors'],
+    ['/admin/store-info', 'settings']
 ];
 
 export const canAccessUrl = (role, url) => {

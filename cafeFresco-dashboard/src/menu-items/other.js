@@ -28,6 +28,12 @@ const orderManagement = {
           type: 'item',
           url: '/admin/discount-code',
         },
+        {
+          id: 'store-info',
+          title: 'Store Info',
+          type: 'item',
+          url: '/admin/store-info',
+        },
 
       ]
     }

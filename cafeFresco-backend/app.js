@@ -27,6 +27,7 @@ const employee = require('./routes/employee')
 const department = require('./routes/department')
 const distributer = require('./routes/distributer')
 const supplier = require('./routes/supplier');
+const settingsRoutes = require('./routes/settings');
 const connectDB = require('./config/db');
 
 const PORT = process.env.PORT || 3000;
@@ -100,6 +101,7 @@ app.use('/employee', employee);
 app.use('/department', department);
 app.use('/supplier', supplier);
 app.use('/distributer', distributer);
+app.use('/settings', settingsRoutes);
 
 // Unknown routes → JSON 404 (never an HTML page)
 app.use((req, res) => {

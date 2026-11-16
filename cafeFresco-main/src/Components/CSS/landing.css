@@ -1355,6 +1355,29 @@
     box-shadow: 0 2px 8px rgba(120, 60, 10, 0.06);
 }
 
+.cf-social {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.cf-social a {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--cf-ink) !important;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 2px 8px rgba(120, 60, 10, 0.06);
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.cf-social a:hover {
+    background: var(--cf-red);
+    color: #fff !important;
+}
+
 /* ================= responsive ================= */
 @media (max-width: 991px) {
     .cf-nav-links,

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const notificationSchema = new mongoose.Schema({
     name: { type: String },
     message: { type: String, required: true },
-    type: { type: String, enum: ['order', 'permission'], required: true },
+    type: { type: String, enum: ['order', 'permission', 'settings', 'chat_escalation', 'ai_error', 'system_error', 'payment_issue'], required: true },
     // Order the notification is about (order notifications only) — the dashboard links to it
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'order', default: null },
     time: { type: Date, default: Date.now },

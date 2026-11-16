@@ -1,0 +1,43 @@
+// Step 0.3 UI: dashboard Store Info page (admin sees + saves; editor has no menu item and is denied)
+const { chromium } = require('playwright');
+const { model, bcrypt, URL, ADMIN, check, connect, done, tag } = require('./lib');
+(async () => {
+    await connect();
+    const Admin = model('admin');
+    const Setting = model('setting');
+    const original = await Setting.findOne({ key: 'store' }).lean();
+    const b = await chromium.launch();
+    const errs = [];
+    const ctx = await b.newContext({ viewport: { width: 1400, height: 900 } });
+    await ctx.request.post(`${URL.API}/admin/login`, { data: ADMIN });
+    const p = await ctx.newPage();
+    p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(`${URL.DASH}/admin/store-info`);
+    await p.waitForTimeout(2500);
+    check('admin sees the Store Info form', (await p.getByLabel('Phone').count()) === 1 && (await p.getByText('Opening hours').count()) >= 1);
+    await p.getByLabel('Phone').fill('abc');
+    await p.getByRole('button', { name: 'Save' }).click();
+    await p.waitForTimeout(1200);
+    check('invalid phone shows the field error', (await p.getByText('Enter a valid phone number').count()) >= 1);
+    await p.getByLabel('Phone').fill('+92 321 1112223');
+    await p.getByRole('button', { name: 'Save' }).click();
+    await p.waitForTimeout(1500);
+    check('valid save persists', (await Setting.findOne({ key: 'store' }).lean())?.contact?.phone === '+92 321 1112223');
+    if (process.argv[2]) await p.screenshot({ path: `${process.argv[2]}/storeinfo.png`, fullPage: true });
+
+    const ed = await Admin.create({ name: 'SI Ed', email: `sied${tag()}@x.com`, password: await bcrypt.hash('Pass1234', 10), role: 'editor' });
+    const ectx = await b.newContext({ viewport: { width: 1400, height: 900 } });
+    await ectx.request.post(`${URL.API}/admin/login`, { data: { email: ed.email, password: 'Pass1234' } });
+    const ep = await ectx.newPage();
+    await ep.goto(`${URL.DASH}/admin/store-info`);
+    await ep.waitForTimeout(2500);
+    check('editor is denied the page', (await ep.getByLabel('Phone').count()) === 0);
+    check('editor has no Store Info menu link', (await ep.locator('a[href="/admin/store-info"]').count()) === 0);
+    check('admin has the Store Info menu link', (await p.locator('a[href="/admin/store-info"]').count()) >= 1 || (await p.getByText('Store Info', { exact: true }).count()) >= 1);
+    await Admin.deleteOne({ _id: ed._id });
+    check('no page errors', errs.length === 0, errs[0]);
+    await b.close();
+    await Setting.deleteOne({ key: 'store' });
+    if (original) await Setting.create(original);
+    await done();
+})();

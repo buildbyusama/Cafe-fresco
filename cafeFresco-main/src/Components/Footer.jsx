@@ -3,12 +3,16 @@ import { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import productContext from '../Context/ProductContext';
 import logo from '../assets/logo/logo-transparent.png';
+import useStoreSettings from '../hooks/useStoreSettings';
 
 // Four-column footer (reference layout): brand, about, menu categories, account
 const Footer = () => {
     const { categories, authStatus } = useContext(productContext);
     const menu = (categories || []).filter((c) => c.productCount > 0).sort((a, b) => b.productCount - a.productCount).slice(0, 5);
     const signedIn = authStatus === 'authenticated';
+    const store = useStoreSettings();
+    const pay = store?.payments || { card: true, cod: true };
+    const social = Object.entries(store?.social || {}).filter(([, url]) => url);
 
     return (
         <footer className="cf-footer">
@@ -17,9 +21,18 @@ const Footer = () => {
                     <img src={logo} alt="Cafe Fresco" style={{ height: 46, marginBottom: 14 }} />
                     <p>Fresh breakfast, healthy bowls, burgers and grills — cooked to order in our kitchen and delivered hot to your door.</p>
                     <div className="cf-pay">
-                        <span><i className="bi bi-credit-card" /> Card</span>
-                        <span><i className="bi bi-cash-coin" /> Cash on delivery</span>
+                        {pay.card && <span><i className="bi bi-credit-card" /> Card</span>}
+                        {pay.cod && <span><i className="bi bi-cash-coin" /> Cash on delivery</span>}
                     </div>
+                    {social.length > 0 && (
+                        <div className="cf-social">
+                            {social.map(([name, url]) => (
+                                <a key={name} href={url} target="_blank" rel="noopener noreferrer" aria-label={`Cafe Fresco on ${name === 'twitter' ? 'X' : name[0].toUpperCase() + name.slice(1)}`}>
+                                    <i className={`bi bi-${name === 'twitter' ? 'twitter-x' : name}`} />
+                                </a>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 <div>
                     <h4>About Us</h4>

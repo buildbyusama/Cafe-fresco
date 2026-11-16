@@ -7,6 +7,7 @@ const cartModel = require('../models/cart')
 const productModel = require('../models/product')
 const { unitPrice } = require('../utils/price')
 const Inventory = require('../models/inventory')
+const { record: recordEvent } = require('../services/events')
 
 const MAX_QTY = 99;
 
@@ -98,6 +99,7 @@ router.post('/add', isLogged, async (req, res) => {
         if (existing) existing.quantity = newQty;
         else cart.items.push({ productId, quantity });
         await cart.save();
+        recordEvent({ userId: req.user.userId, type: 'add_to_cart', productId, quantity });
 
         res.status(200).json({ message: "Product added to cart", ...(await formatCart(cart)) });
     } catch (error) {

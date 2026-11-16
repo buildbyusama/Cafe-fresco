@@ -6,6 +6,7 @@ import './CSS/landing.css';
 import './CSS/menu.css';
 import DishCard from './home/DishCard';
 import MenuFilters, { filterChips } from './menu/MenuFilters';
+import { trackSearch } from '../utils/track';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { colorFor, imgUrl, onImgError } from './home/useHomeData';
 
@@ -99,6 +100,11 @@ const Products = () => {
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
+
+    // a settled search (the URL updates 300 ms after typing stops) is a recommendation signal
+    useEffect(() => {
+        trackSearch(searchTerm);
+    }, [searchTerm]);
 
     // Filtering, sorting and paging happen on the server (/product/fetch)
     useEffect(() => {

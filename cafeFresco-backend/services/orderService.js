@@ -9,6 +9,7 @@ const { round2, computeLines } = require('../utils/price');
 const { validateShippingAddress } = require('../utils/validation');
 const { normalizeItems, reserveItems, restoreItems } = require('./inventoryService');
 const { validateDiscount, redeemDiscount, releaseDiscount } = require('./discountService');
+const { record: recordEvents } = require('./events');
 
 const stripe = () => require('stripe')(process.env.STRIPE_SECRET_KEY);
 
@@ -91,6 +92,8 @@ async function createOrderFromCart(userId, { shippingAddress, discountCode, paym
         }
 
         notifyAdmins(user?.name || 'Customer', `New order #${String(order._id).slice(-6).toUpperCase()} from ${user?.name || 'a customer'}`, order._id);
+        // one purchase signal per line, only for a new order (replays return earlier)
+        recordEvents(order.products.map((l) => ({ userId, type: 'purchase', productId: l.productId, quantity: l.quantity })));
         return { order, replayed: false };
     } catch (err) {
         if (redeemed) await releaseDiscount({ discountId: discount._id, userId });

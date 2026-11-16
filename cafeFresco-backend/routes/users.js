@@ -24,6 +24,8 @@ const userLoginLimiter = createLimiter({ max: 5, skipSuccessfulRequests: true })
 const forgotLimiter = createLimiter({ max: 5 });
 const resetLimiter = createLimiter({ max: 5 });
 
+const { mergeAnon } = require('../services/events');
+
 const signIn = (res, user) => {
     const token = jwt.sign({ email: user.email, userId: user._id }, SECRET_KEY, { expiresIn: '15d' });
     // httpOnly: JavaScript never sees the token (D10); the session comes from GET /user/me
@@ -60,6 +62,7 @@ router.post('/register', vpnDetect, async (req, res) => {
         });
 
         signIn(res, newUser);
+        await mergeAnon(req, res, newUser._id);
         return res.status(201).json({ message: 'User registered successfully!', user: { name: newUser.name, email: newUser.email } });
     } catch (err) {
         if (err?.code === 11000) return res.status(409).json({ message: 'An account with this email already exists' });
@@ -84,6 +87,7 @@ router.post('/login', userLoginLimiter, vpnDetect, async (req, res) => {
         }
 
         signIn(res, checkUser);
+        await mergeAnon(req, res, checkUser._id);
         res.status(200).json({ message: "Login successful", user: { name: checkUser.name, email: checkUser.email } });
     } catch (err) {
         console.error(err);

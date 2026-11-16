@@ -6,6 +6,7 @@ import { apiFetch } from '../api';
 import { formatMoney, unitPrice } from '../utils/price';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import useStoreSettings from '../hooks/useStoreSettings';
+import { trackView } from '../utils/track';
 import DishCard from './home/DishCard';
 import { colorFor, imgUrl, onImgError } from './home/useHomeData';
 import './CSS/landing.css';
@@ -61,6 +62,7 @@ const ProductDetail = () => {
                 if (!r.ok) return setStatus('error');
                 setP(r.data);
                 setStatus('ready');
+                trackView(r.data._id);
             })
             .catch((err) => {
                 if (err.name !== 'AbortError') setStatus('error');

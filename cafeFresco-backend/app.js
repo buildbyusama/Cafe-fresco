@@ -73,7 +73,8 @@ app.post('/stripe/webhook', express.raw({ type: 'application/json' }), paymentRo
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-app.use(cookieParser());
+// The secret signs the guest cookie (cf_anon) used for recommendations and guest chat
+app.use(cookieParser(require('./config/env').cookieSecret()));
 
 app.get('/', (req, res) => {
     res.send('Server is running');
@@ -102,6 +103,7 @@ app.use('/department', department);
 app.use('/supplier', supplier);
 app.use('/distributer', distributer);
 app.use('/settings', settingsRoutes);
+app.use('/events', require('./routes/events'));
 
 // Unknown routes → JSON 404 (never an HTML page)
 app.use((req, res) => {

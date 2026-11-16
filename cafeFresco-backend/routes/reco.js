@@ -4,6 +4,7 @@ const { isObjectId } = require('../utils/validation');
 const { withStock } = require('../services/productView');
 const { anonIdOf, optionalUserId } = require('../services/events');
 const reco = require('../services/recommendations');
+const { polishReasons } = require('../services/ai/recoReasons');
 
 const send = async (res, ids, extra = {}) => res.json({ ...extra, products: await withStock(await reco.hydrate(ids)) });
 const fail = (res, err, what) => {
@@ -22,9 +23,14 @@ router.get('/trending', async (req, res) => {
 // The signed-in customer, else the guest cookie; identity never comes from the query or body
 router.get('/for-me', async (req, res) => {
     try {
-        const { ids, personal } = await reco.forUser({ userId: optionalUserId(req), anonId: anonIdOf(req) });
+        const userId = optionalUserId(req);
+        const anonId = anonIdOf(req);
+        const { ids, personal, reasons } = await reco.forUser({ userId, anonId });
         res.set('Cache-Control', 'private, no-store');
-        await send(res, ids, { personal });
+        if (!personal) return send(res, ids, { personal });
+        const products = await withStock(await reco.hydrate(ids));
+        const why = await polishReasons(`${userId || anonId}:${ids.join(',')}`, products.map((p) => ({ id: String(p._id), title: p.title, hint: reasons[String(p._id)] })));
+        res.json({ personal, products: products.map((p) => ({ ...p, reason: why[String(p._id)] })) });
     } catch (err) {
         fail(res, err, 'for-me');
     }

@@ -216,7 +216,12 @@ export function HomeDishRow({ script, title, items, sub }) {
             <div className="fh-dish-grid" style={{ marginTop: 44 }}>
                 {!items
                     ? Array.from({ length: 4 }, (_, i) => <div key={i} className="fh-skel" style={{ aspectRatio: '4 / 4.3', borderRadius: 24 }} />)
-                    : items.slice(0, 4).map((p) => <DishCard key={p._id} product={p} />)}
+                    : items.slice(0, 4).map((p) => (
+                          <div key={p._id} className="fh-why-wrap">
+                              <DishCard product={p} />
+                              {p.reason && <p className="fh-why"><i className="bi bi-stars" /> {p.reason}</p>}
+                          </div>
+                      ))}
             </div>
         </section>
     );

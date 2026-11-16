@@ -1717,3 +1717,17 @@
     margin: 8px 0 0;
     font-size: 0.95rem;
 }
+
+/* "why this?" line under a recommended dish */
+.fh-why-wrap {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.fh-why {
+    margin: 8px 4px 0;
+    font-size: 0.8rem;
+    color: var(--cf-red);
+    font-weight: 600;
+}

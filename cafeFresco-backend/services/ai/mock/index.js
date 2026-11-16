@@ -84,8 +84,20 @@ function answer(results) {
     return parts.filter(Boolean).join('\n\n') || "Sorry, I couldn't find an answer to that.";
 }
 
+// "why this?" reasons: friendlier wording of each hint, plus an id we were NOT given (the caller must drop it)
+function reasons(messages) {
+    const { dishes = [] } = safeJson(messages[messages.length - 1].content);
+    const out = { mock_extra_id: 'Free dessert for you' };
+    for (const d of dishes) out[d.id] = d.hint.replace(/^Because you like/, 'You enjoy');
+    return JSON.stringify({ reasons: out });
+}
+
 async function chat({ messages, onDelta }) {
     const inTokens = messages.reduce((n, m) => n + tokens(m.content), 0);
+    if (/^You write very short reasons/.test(messages[0]?.content || '')) {
+        const content = reasons(messages);
+        return { content, toolCalls: [], usage: { in: inTokens, out: tokens(content) } };
+    }
     const last = messages[messages.length - 1];
     let content = '';
     let toolCalls = [];

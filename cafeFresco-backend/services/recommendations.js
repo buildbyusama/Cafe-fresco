@@ -123,13 +123,25 @@ async function forUser({ userId, anonId }) {
         const boughtRecently = new Set(history.filter((e) => e.type === 'purchase' && now - new Date(e.at).getTime() < DAY).map((e) => String(e.productId)));
 
         const scores = new Map();
+        const why = new Map(); // the strongest signal behind each pick, for the "why this?" line
         for (const [id, p] of items) {
             if (boughtRecently.has(id)) continue;
-            const tagScore = (p.tags || []).length ? Math.max(...p.tags.map(tag)) : 0;
+            const bestTag = (p.tags || []).reduce((best, t) => (tag(t) > (best ? tag(best) : 0) ? t : best), null);
+            const tagScore = bestTag ? tag(bestTag) : 0;
             const sim = topVecs.length && p.embedding?.length ? Math.max(...topVecs.map((v) => cosine(v, p.embedding))) : 0;
-            scores.set(id, 0.45 * cat(String(p.category)) + 0.3 * tagScore + 0.25 * sim + 0.001 * (p.averageRating || 0));
+            const parts = { category: 0.45 * cat(String(p.category)), tag: 0.3 * tagScore, similar: 0.25 * sim };
+            scores.set(id, parts.category + parts.tag + parts.similar + 0.001 * (p.averageRating || 0));
+            const top = Object.entries(parts).sort((a, b) => b[1] - a[1])[0][0];
+            why.set(id, top === 'tag' && bestTag ? { kind: 'tag', value: bestTag } : top === 'similar' && sim > 0 ? { kind: 'similar' } : { kind: 'category', value: String(p.category) });
         }
-        return { ids: diversify(ranked(scores), items), personal: true };
+        const ids = diversify(ranked(scores), items);
+        const catTitles = new Map((await mongoose.model('category').find({ _id: { $in: ids.map((id) => items.get(id).category) } }).select('title').lean()).map((c) => [String(c._id), c.title]));
+        const reasons = Object.fromEntries(ids.map((id) => {
+            const w = why.get(id);
+            const text = w.kind === 'tag' ? `Because you like #${w.value}` : w.kind === 'similar' ? 'Similar to dishes you viewed' : `Because you like ${catTitles.get(w.value) || 'this kind of dish'}`;
+            return [id, text];
+        }));
+        return { ids, personal: true, reasons };
     });
 }
 

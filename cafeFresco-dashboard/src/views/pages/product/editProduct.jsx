@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { FOOD_EMPTY, appendFood, foodFromProduct } from './foodFacts';
 import { Alert, Box, Button, Skeleton } from '@mui/material';
 import { MainContext } from '../../context/index.jsx';
 import { useNavigate, useParams } from 'react-router';
@@ -8,7 +9,7 @@ import EmptyState from 'ui-component/EmptyState';
 import { FormActions, FormCard } from 'ui-component/PageToolbar';
 import ProductFields from './ProductFields';
 
-const EMPTY = { title: '', description: '', image: null, price: '', discount: '', stock: '', category: '', featured: false, newRelease: false, isActive: true };
+const EMPTY = { title: '', description: '', image: null, price: '', discount: '', stock: '', category: '', featured: false, newRelease: false, isActive: true, ...FOOD_EMPTY };
 const KEYS = ['title', 'description', 'price', 'discount', 'stock', 'category', 'featured', 'newRelease', 'isActive'];
 
 const validate = (d) => {
@@ -55,7 +56,8 @@ const ProductEditPage = () => {
                     category: data.category?._id ?? '',
                     featured: !!data.featured,
                     newRelease: !!data.newRelease,
-                    isActive: data.isActive !== false
+                    isActive: data.isActive !== false,
+                    ...foodFromProduct(data)
                 };
                 setProductData(loaded);
                 setOriginal(loaded);
@@ -88,6 +90,7 @@ const ProductEditPage = () => {
         for (const key of KEYS) {
             if (String(productData[key]) !== String(original[key])) formData.append(key, productData[key]);
         }
+        appendFood(formData, productData, original);
         // the server refuses the new stock if sales changed it since this page loaded
         if (formData.has('stock') && original.stock !== '') formData.append('expectedStock', original.stock);
         if (productData.image instanceof File) formData.append('image', productData.image);

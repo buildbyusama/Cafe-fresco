@@ -20,6 +20,45 @@ const { escapeRegex } = require('../utils/validation');
 
 const EDITABLE = ['title', 'description', 'price', 'discount', 'category', 'featured', 'newRelease', 'isActive'];
 const toBool = (v) => v === true || v === 'true';
+const ALLERGENS = ['gluten', 'dairy', 'egg', 'nuts', 'peanut', 'soy', 'fish', 'shellfish', 'sesame'];
+// multipart forms send lists/objects as JSON strings; JSON bodies send them as-is
+const fromForm = (v) => {
+    if (typeof v !== 'string') return v;
+    try { return JSON.parse(v); } catch { return Symbol.for('bad'); }
+};
+const triState = (v) => (v === null || v === '' || v === 'unknown' || v === undefined ? null : v === true || v === 'true' ? true : v === false || v === 'false' ? false : undefined);
+
+// tags / dietary / allergens → adds to data, or to fields on error
+function parseFoodFacts(body, data, fields) {
+    if (body.tags !== undefined) {
+        const tags = fromForm(body.tags);
+        if (!Array.isArray(tags)) fields.tags = 'Tags must be a list';
+        else {
+            const clean = [...new Set(tags.map((t) => String(t).trim().toLowerCase().replace(/\s+/g, ' ')).filter(Boolean))];
+            if (clean.length > 10) fields.tags = 'At most 10 tags';
+            else if (clean.some((t) => t.length < 2 || t.length > 24 || !/^[\p{L}\p{N} &'-]+$/u.test(t))) fields.tags = 'Each tag: 2–24 letters, numbers, spaces, & or -';
+            else data.tags = clean;
+        }
+    }
+    if (body.dietary !== undefined) {
+        const d = fromForm(body.dietary);
+        if (!d || typeof d !== 'object' || Array.isArray(d)) fields.dietary = 'Invalid dietary info';
+        else {
+            const vegetarian = triState(d.vegetarian), vegan = triState(d.vegan);
+            const spicy = d.spicyLevel === null || d.spicyLevel === '' || d.spicyLevel === undefined ? null : Number(d.spicyLevel);
+            if (vegetarian === undefined || vegan === undefined) fields.dietary = 'Vegetarian/vegan must be yes, no or unknown';
+            else if (spicy !== null && !(Number.isInteger(spicy) && spicy >= 0 && spicy <= 3)) fields.dietary = 'Spice level must be 0–3';
+            else if (vegan === true && vegetarian === false) fields.dietary = 'A vegan dish is also vegetarian';
+            else data.dietary = { vegetarian: vegan === true ? true : vegetarian, vegan, spicyLevel: spicy };
+        }
+    }
+    if (body.allergens !== undefined) {
+        const a = fromForm(body.allergens);
+        if (!Array.isArray(a) || a.some((x) => !ALLERGENS.includes(String(x)))) fields.allergens = `Allergens must be from: ${ALLERGENS.join(', ')}`;
+        else data.allergens = [...new Set(a.map(String))];
+    }
+    if (body.allergensVerified !== undefined) data.allergensVerified = toBool(body.allergensVerified);
+}
 // Optional "stock I was looking at" for conflict detection; absent or invalid → no check (older clients)
 const parseExpected = (v) => (v === undefined || v === '' || !Number.isInteger(Number(v)) ? undefined : Number(v));
 const imageFile = (image) => path.join(__dirname, '..', 'public', String(image || '').replace(/^\/+/, ''));
@@ -57,6 +96,7 @@ async function parseProductInput(body, { partial }) {
         if (!mongoose.Types.ObjectId.isValid(data.category) || !(await Category.exists({ _id: data.category }))) fields.category = 'Choose an existing category';
     }
     for (const flag of ['featured', 'newRelease', 'isActive']) if (data[flag] !== undefined) data[flag] = toBool(data[flag]);
+    parseFoodFacts(body, data, fields);
 
     if (!partial) {
         for (const req of ['title', 'description', 'price', 'category']) if (data[req] === undefined && !fields[req]) fields[req] = `${req[0].toUpperCase() + req.slice(1)} is required`;
@@ -309,6 +349,23 @@ router.get("/fetch", optionalAdmin, async (req, res) => {
     }
 });
 
+
+// Distinct tags of shop-visible products with counts (filters, dashboard autocomplete)
+router.get('/tags', async (req, res) => {
+    try {
+        const rows = await Product.aggregate([
+            { $match: { isActive: { $ne: false }, 'tags.0': { $exists: true } } },
+            { $unwind: '$tags' },
+            { $group: { _id: '$tags', count: { $sum: 1 } } },
+            { $sort: { count: -1, _id: 1 } },
+            { $limit: 100 },
+        ]);
+        res.json({ tags: rows.map((r) => ({ tag: r._id, count: r.count })), allergens: ALLERGENS });
+    } catch (error) {
+        console.error('Tags fetch failed:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
 
 // ✅ Get a single product by ID (invalid id → 400; missing or inactive for the shop → 404)
 router.get('/:id', optionalAdmin, async (req, res) => {

@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react';
+import { FOOD_EMPTY, appendFood, isFoodKey } from './foodFacts';
 import { Box } from '@mui/material';
 import { MainContext } from '../../context/index.jsx';
 import { useNavigate } from 'react-router';
@@ -7,7 +8,7 @@ import { useNotify } from '../../../contexts/NotifyContext';
 import { FormActions } from 'ui-component/PageToolbar';
 import ProductFields from './ProductFields';
 
-const EMPTY = { title: '', description: '', image: null, price: '', discount: '', stock: '', category: '', featured: false, newRelease: false };
+const EMPTY = { title: '', description: '', image: null, price: '', discount: '', stock: '', category: '', featured: false, newRelease: false, ...FOOD_EMPTY };
 
 const validate = (d) => {
     const errors = {};
@@ -42,8 +43,10 @@ const ProductAddPage = () => {
         const formData = new FormData();
         Object.entries({ ...productData, discount: productData.discount === '' ? 0 : productData.discount }).forEach(([key, value]) => {
             if (key === 'image' && !value) return;
+            if (isFoodKey(key)) return;
             formData.append(key, value);
         });
+        appendFood(formData, productData);
 
         setSaving(true);
         try {

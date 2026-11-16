@@ -43,6 +43,16 @@ const productSchema = mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    // Search, filters and the assistant read these. null / empty = unknown (never "none").
+    tags: { type: [String], default: [] },
+    dietary: {
+        vegetarian: { type: Boolean, default: null },
+        vegan: { type: Boolean, default: null },
+        spicyLevel: { type: Number, min: 0, max: 3, default: null },
+    },
+    allergens: { type: [String], default: [] },
+    // the allergen list is shown to customers (and the assistant) only once staff have checked it
+    allergensVerified: { type: Boolean, default: false },
     createdAt: {
         type: Date,
         default: Date.now,
@@ -71,6 +81,8 @@ const productSchema = mongoose.Schema({
     }
 
 });
+
+productSchema.index({ tags: 1 });
 
 productSchema.virtual('discountedPrice').get(function () {
     return (this.price * (1 - this.discount / 100)).toFixed(2);

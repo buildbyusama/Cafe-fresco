@@ -603,3 +603,50 @@
         width: 100%;
     }
 }
+
+/* tags, dietary badges and the allergen note */
+.fd-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: -6px 0 14px;
+}
+
+.fd-tag {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--cf-muted) !important;
+    background: var(--cf-cream);
+    border-radius: 99px;
+    padding: 4px 11px;
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.fd-tag:hover {
+    background: var(--cf-red);
+    color: #fff !important;
+}
+
+.fd-diet {
+    font-size: 0.78rem;
+    font-weight: 700;
+    border-radius: 99px;
+    padding: 4px 11px;
+}
+
+.fd-diet.is-veg {
+    background: #e8f6ee;
+    color: #1e7a45;
+}
+
+.fd-diet.is-spicy {
+    background: #fdecec;
+    color: #b42318;
+}
+
+.fd-allergens {
+    font-size: 0.82rem;
+    color: var(--cf-muted);
+    margin: 0 0 16px;
+}

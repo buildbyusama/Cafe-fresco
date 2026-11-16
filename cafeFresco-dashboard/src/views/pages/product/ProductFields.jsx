@@ -4,6 +4,7 @@ import { Box, ButtonBase, IconButton, InputAdornment, MenuItem, Stack, Switch, T
 import { FormCard } from 'ui-component/PageToolbar';
 import { formatMoney } from '../../../utils/format';
 import { IconPhotoUp, IconTrash } from '@tabler/icons-react';
+import FoodFactsCard from './FoodFactsCard';
 
 const MAX_MB = 2; // same as the backend upload limit
 const TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -74,6 +75,8 @@ export default function ProductFields({ data, onChange, errors = {}, preview, on
                         </Stack>
                     </Stack>
                 </FormCard>
+
+                <FoodFactsCard data={data} onChange={onChange} errors={errors} />
             </Box>
 
             <Box sx={{ display: 'grid', gap: 2.5 }}>

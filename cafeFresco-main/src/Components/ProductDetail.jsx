@@ -5,6 +5,7 @@ import productContext from '../Context/ProductContext';
 import { apiFetch } from '../api';
 import { formatMoney, unitPrice } from '../utils/price';
 import useDocumentTitle from '../hooks/useDocumentTitle';
+import useStoreSettings from '../hooks/useStoreSettings';
 import DishCard from './home/DishCard';
 import { colorFor, imgUrl, onImgError } from './home/useHomeData';
 import './CSS/landing.css';
@@ -25,6 +26,9 @@ const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { addToCart, addToWish, wishlistIds, playSound, categories } = useContext(productContext);
+    const store = useStoreSettings();
+    const pay = store?.payments || { card: true, cod: true };
+    const payLabel = pay.card && pay.cod ? 'Card or cash on delivery' : pay.card ? 'Card payment' : 'Cash on delivery';
     const [status, setStatus] = useState('loading'); // loading | ready | notfound | error
     const [p, setP] = useState(null);
     const [quantity, setQuantity] = useState(1);
@@ -247,10 +251,28 @@ const ProductDetail = () => {
 
                         <p className="fd-desc">{p.description}</p>
 
+                        {(p.tags?.length > 0 || p.dietary?.vegetarian || p.dietary?.vegan || p.dietary?.spicyLevel > 0) && (
+                            <div className="fd-tags">
+                                {p.dietary?.vegan ? <span className="fd-diet is-veg"><i className="bi bi-flower1" /> Vegan</span> : p.dietary?.vegetarian && <span className="fd-diet is-veg"><i className="bi bi-flower1" /> Vegetarian</span>}
+                                {p.dietary?.spicyLevel > 0 && <span className="fd-diet is-spicy"><i className="bi bi-fire" /> {['', 'Mild', 'Medium', 'Hot'][p.dietary.spicyLevel]}</span>}
+                                {(p.tags || []).map((t) => (
+                                    <Link key={t} to={`/products?tags=${encodeURIComponent(t)}`} className="fd-tag">#{t}</Link>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* only allergen info staff have checked is shown; otherwise point to staff */}
+                        <p className="fd-allergens">
+                            <i className="bi bi-info-circle" />{' '}
+                            {p.allergensVerified
+                                ? p.allergens?.length ? `Contains: ${p.allergens.join(', ')}.` : 'No common allergens listed by our kitchen.'
+                                : 'Allergies? Please ask our staff before ordering.'}
+                        </p>
+
                         <ul className="fd-perks">
                             <li><i className="bi bi-fire" /> Cooked fresh to order</li>
-                            <li><i className="bi bi-truck" /> Delivered in ~30 mins</li>
-                            <li><i className="bi bi-credit-card" /> Card or cash on delivery</li>
+                            {store?.delivery?.etaMinutes > 0 && <li><i className="bi bi-truck" /> Delivered in about {store.delivery.etaMinutes} mins</li>}
+                            <li><i className="bi bi-credit-card" /> {payLabel}</li>
                         </ul>
 
                         <div className="fd-buy">

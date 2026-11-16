@@ -1711,3 +1711,9 @@
     .fh-cat-img { width: 104px; height: 104px; top: -40px; border-width: 6px; }
     .fh-cat-price b { font-size: 1.2rem; }
 }
+
+.fh-row-sub {
+    color: var(--cf-muted);
+    margin: 8px 0 0;
+    font-size: 0.95rem;
+}

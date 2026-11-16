@@ -84,7 +84,7 @@ const ProductDetail = () => {
         fetchReviews();
     }, [productId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // "More from this category": fixed order, never the dish being viewed; topped up from the full menu
+    // "You may also like": similar dishes (category, tags, meaning), never this one; topped up from trending
     useEffect(() => {
         if (!productId) return;
         let alive = true;
@@ -92,12 +92,10 @@ const ProductDetail = () => {
         (async () => {
             const pick = [];
             const add = (list) => list.forEach((d) => d._id !== productId && !pick.some((x) => x._id === d._id) && pick.length < 4 && pick.push(d));
-            if (categoryId) {
-                const r = await apiFetch(`/product/fetch?category=${categoryId}&sort=recommended&limit=8`);
-                if (r.ok) add(r.data.products || []);
-            }
+            const similar = await apiFetch(`/reco/similar/${productId}`);
+            if (similar.ok) add(similar.data.products || []);
             if (pick.length < 4) {
-                const r = await apiFetch('/product/fetch?sort=recommended&limit=12');
+                const r = await apiFetch('/reco/trending');
                 if (r.ok) add(r.data.products || []);
             }
             if (alive) setRelated(pick);
@@ -105,7 +103,7 @@ const ProductDetail = () => {
         return () => {
             alive = false;
         };
-    }, [productId, categoryId]);
+    }, [productId]);
 
     const loginNext = () => navigate(`/login?next=${encodeURIComponent(window.location.pathname)}`);
 
@@ -398,7 +396,7 @@ const ProductDetail = () => {
                         <div className="fd-related-head">
                             <div>
                                 <div className="fh-eyebrow">Craving more?</div>
-                                <h2 className="fh-h2">{p.category ? `More from ${p.category.title}` : 'You may also like'}</h2>
+                                <h2 className="fh-h2">You may also like</h2>
                             </div>
                             <Link to={p.category ? `/products?category=${p.category._id}` : '/products'} className="fh-btn fh-btn-ghost">
                                 See all <i className="bi bi-arrow-right" />

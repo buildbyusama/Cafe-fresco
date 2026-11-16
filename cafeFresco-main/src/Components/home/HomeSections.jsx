@@ -199,3 +199,27 @@ export function HomeOffer({ bestDeal }) {
 }
 
 HomeOffer.propTypes = { bestDeal: PropTypes.object };
+
+// ---------- recommendation rows ("Recommended for you", "Trending now") ----------
+export function HomeDishRow({ script, title, items, sub }) {
+    const ref = useReveal();
+    if (items && !items.length) return null;
+
+    return (
+        <section ref={ref} className="fh-wrap fh-section fh-reveal">
+            <div className="fh-center">
+                <div className="fh-script">{script}</div>
+                <h2 className="fh-h2">{title}</h2>
+                {sub && <p className="fh-row-sub">{sub}</p>}
+                <div className="fh-rule" />
+            </div>
+            <div className="fh-dish-grid" style={{ marginTop: 44 }}>
+                {!items
+                    ? Array.from({ length: 4 }, (_, i) => <div key={i} className="fh-skel" style={{ aspectRatio: '4 / 4.3', borderRadius: 24 }} />)
+                    : items.slice(0, 4).map((p) => <DishCard key={p._id} product={p} />)}
+            </div>
+        </section>
+    );
+}
+
+HomeDishRow.propTypes = { script: PropTypes.string, title: PropTypes.string.isRequired, items: PropTypes.array, sub: PropTypes.string };

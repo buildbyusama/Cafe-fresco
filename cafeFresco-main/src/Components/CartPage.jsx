@@ -31,12 +31,22 @@ const CartPage = () => {
         if (appliedCode) setDiscountCode(appliedCode);
     }, [appliedCode]);
 
-    // empty cart: suggest a few signature dishes instead of a dead end
+    // empty cart: suggest what's trending instead of a dead end
     const empty = cartLoaded && cart.length === 0;
     useEffect(() => {
         if (!empty || ideas) return;
-        apiFetch('/product/fetch?sort=recommended&limit=4').then((r) => setIdeas(r.ok ? r.data.products || [] : []));
+        apiFetch('/reco/trending').then((r) => setIdeas(r.ok ? (r.data.products || []).slice(0, 4) : []));
     }, [empty, ideas]);
+
+    // "Goes well with your order": refreshed when the set of dishes changes (not on quantity changes)
+    const cartKey = cart.map((i) => String(i.productId)).sort().join(',');
+    const [pairs, setPairs] = useState(null);
+    useEffect(() => {
+        if (!cartKey) return undefined;
+        let alive = true;
+        apiFetch('/reco/cart', { method: 'POST', body: { productIds: cartKey.split(',') } }).then((r) => alive && setPairs(r.ok ? (r.data.products || []).slice(0, 4) : []));
+        return () => { alive = false; };
+    }, [cartKey]);
 
     const unavailableCount = cart.filter((item) => item.available === false).length;
     const anyPending = pendingIds.length > 0;
@@ -229,6 +239,16 @@ const CartPage = () => {
                                 </div>
                             </aside>
                         </div>
+
+                        {pairs && pairs.length > 0 && (
+                            <section className="fh-section fk-pairs" aria-label="Goes well with your order">
+                                <div className="fh-eyebrow">Complete your meal</div>
+                                <h2 className="fh-h2">Goes well with your order</h2>
+                                <div className="fh-dish-grid" style={{ marginTop: 26 }}>
+                                    {pairs.map((p) => <DishCard key={p._id} product={p} />)}
+                                </div>
+                            </section>
+                        )}
                     </>
                 )}
             </div>

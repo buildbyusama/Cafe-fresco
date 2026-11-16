@@ -162,4 +162,33 @@ router.get('/sessions/:id', ...viewers, async (req, res) => {
     }
 });
 
+// Today's AI usage against the budget (Assistant settings page)
+router.get('/usage', ...viewers, async (req, res) => {
+    try {
+        const { usedToday, dailyBudget } = require('../services/ai/client');
+        res.json({ status: status(), usedToday: await usedToday(), budget: await dailyBudget(), maxBudget: ai().dailyBudget, model: ai().model });
+    } catch (err) {
+        console.error('Usage read failed:', err);
+        res.status(500).json({ message: 'Could not load usage' });
+    }
+});
+
+// Rebuild search vectors for the menu and FAQ (only changed items cost tokens). One run at a time.
+let reindexing = false;
+router.post('/reindex', isAdmin, authorizeRoles('admin'), async (req, res) => {
+    if (status() === 'disabled') return res.status(409).json({ message: 'Add an OpenAI API key on the server first. Search works without it, using keywords.' });
+    if (reindexing) return res.status(409).json({ message: 'Re-indexing is already running. Try again in a minute.' });
+    reindexing = true;
+    try {
+        const { embedProducts, embedKnowledge } = require('../services/ai/embeddings');
+        const [dishes, faq] = [await embedProducts(), await embedKnowledge()];
+        res.json({ message: 'Search index is up to date', dishes, faq });
+    } catch (err) {
+        console.error('Re-index failed:', err);
+        res.status(err.code === 'budget' ? 409 : 502).json({ message: err.code === 'budget' ? "Today's AI budget is used up. Try again tomorrow." : 'Re-indexing failed. Please try again.' });
+    } finally {
+        reindexing = false;
+    }
+});
+
 module.exports = router;

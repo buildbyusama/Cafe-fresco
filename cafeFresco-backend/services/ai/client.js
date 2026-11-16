@@ -33,9 +33,20 @@ async function usedToday() {
     return (row?.tokensIn || 0) + (row?.tokensOut || 0);
 }
 
+// The dashboard may set a lower daily budget (Assistant settings); it can never exceed AI_DAILY_TOKEN_BUDGET
+async function dailyBudget() {
+    const cap = ai().dailyBudget;
+    try {
+        const set = (await require('../settings').getSettings()).chatbot?.dailyTokenBudget;
+        return Number.isFinite(set) && set >= 0 ? Math.min(set, cap) : cap;
+    } catch {
+        return cap;
+    }
+}
+
 async function assertAvailable() {
     if (status() === 'disabled') throw new AiError('disabled', 'AI is not configured');
-    if ((await usedToday()) >= ai().dailyBudget) throw new AiError('budget', 'Daily AI budget reached');
+    if ((await usedToday()) >= (await dailyBudget())) throw new AiError('budget', 'Daily AI budget reached');
 }
 
 const record = (inc) => AiUsage.updateOne({ day: today() }, { $inc: inc }, { upsert: true }).catch(() => {});
@@ -142,4 +153,4 @@ async function flagged(text) {
     }
 }
 
-module.exports = { AiError, chat, embed, flagged, status, usedToday, _withRetry: withRetry };
+module.exports = { AiError, chat, embed, flagged, status, usedToday, dailyBudget, _withRetry: withRetry };

@@ -303,6 +303,25 @@ router.get("/fetch", optionalAdmin, async (req, res) => {
         }
         if (name) filter.title = { $regex: escapeRegex(String(name).trim()), $options: "i" };
 
+        // Price range on the price the customer pays (same formula as the price sort and the cards)
+        const parsePrice = (v) => (v === undefined || v === '' ? null : Number(v));
+        const minPrice = parsePrice(req.query.minPrice);
+        const maxPrice = parsePrice(req.query.maxPrice);
+        if ((minPrice !== null && !(minPrice >= 0)) || (maxPrice !== null && !(maxPrice >= 0))) return res.status(400).json({ message: 'Prices must be numbers of 0 or more' });
+        if (minPrice !== null && maxPrice !== null && minPrice > maxPrice) return res.status(400).json({ message: 'Minimum price is above the maximum' });
+        if (minPrice !== null || maxPrice !== null) {
+            const final = { $round: [{ $multiply: ['$price', { $subtract: [1, { $divide: [{ $ifNull: ['$discount', 0] }, 100] }] }] }, 2] };
+            filter.$expr = { $and: [...(minPrice !== null ? [{ $gte: [final, minPrice] }] : []), ...(maxPrice !== null ? [{ $lte: [final, maxPrice] }] : [])] };
+        }
+        // Tags: every chosen tag must be on the dish
+        if (req.query.tags) {
+            const tags = String(req.query.tags).split(',').map((t) => t.trim().toLowerCase()).filter(Boolean).slice(0, 10);
+            if (tags.length) filter.tags = { $all: tags };
+        }
+        if (req.query.diet === 'vegetarian') filter['dietary.vegetarian'] = true;
+        else if (req.query.diet === 'vegan') filter['dietary.vegan'] = true;
+        else if (req.query.diet) return res.status(400).json({ message: "diet must be 'vegetarian' or 'vegan'" });
+
         // Stock filter for the inventory page: low (≤ threshold) or out (0)
         if (stock === 'low' || stock === 'out') {
             const threshold = Number(process.env.LOW_STOCK_THRESHOLD || 5);

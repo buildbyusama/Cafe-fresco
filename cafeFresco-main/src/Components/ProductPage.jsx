@@ -5,6 +5,7 @@ import { apiFetch } from '../api';
 import './CSS/landing.css';
 import './CSS/menu.css';
 import DishCard from './home/DishCard';
+import MenuFilters, { filterChips } from './menu/MenuFilters';
 import useDocumentTitle from '../hooks/useDocumentTitle';
 import { colorFor, imgUrl, onImgError } from './home/useHomeData';
 
@@ -44,6 +45,29 @@ const Products = () => {
     // '' = Recommended (featured first); 'new' = newest; low / high = price
     const sort = ['low', 'high', 'new'].includes(searchParams.get('sort')) ? searchParams.get('sort') : '';
     const currentPage = Math.max(1, parseInt(searchParams.get('page')) || 1);
+    // Price (final price), diet and tags: ?min=&max=&diet=&tags=a,b
+    const priceParam = (k) => (/^\d+(\.\d+)?$/.test(searchParams.get(k) || '') ? searchParams.get(k) : '');
+    const extra = {
+        min: priceParam('min'),
+        max: priceParam('max'),
+        diet: ['vegetarian', 'vegan'].includes(searchParams.get('diet')) ? searchParams.get('diet') : '',
+        tags: (searchParams.get('tags') || '').split(',').map((t) => t.trim().toLowerCase()).filter(Boolean)
+    };
+    const extraKey = `${extra.min}|${extra.max}|${extra.diet}|${extra.tags.join(',')}`;
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const applyFilters = (f) => {
+        setSearchParams(() => {
+            const next = new URLSearchParams(window.location.search);
+            for (const [k, v] of [['min', f.min], ['max', f.max], ['diet', f.diet], ['tags', f.tags.join(',')]]) {
+                if (v) next.set(k, v);
+                else next.delete(k);
+            }
+            next.delete('page');
+            return next;
+        });
+        setFiltersOpen(false);
+    };
+    const removeChip = (key) => applyFilters(key === 'price' ? { ...extra, min: '', max: '' } : key === 'diet' ? { ...extra, diet: '' } : { ...extra, tags: extra.tags.filter((t) => `tag:${t}` !== key) });
 
     // Changing a filter or the sort goes back to page 1
     // Every update starts from the live URL (not a value captured at render), so the delayed
@@ -82,6 +106,10 @@ const Products = () => {
         const qs = new URLSearchParams({ page: String(currentPage), limit: String(PER_PAGE) });
         if (selectedCategory) qs.set('category', selectedCategory);
         if (searchTerm) qs.set('name', searchTerm);
+        if (extra.min) qs.set('minPrice', extra.min);
+        if (extra.max) qs.set('maxPrice', extra.max);
+        if (extra.diet) qs.set('diet', extra.diet);
+        if (extra.tags.length) qs.set('tags', extra.tags.join(','));
         qs.set('sort', sort === 'new' ? '' : sort || 'recommended');
         setLoading(true);
         setError(false);
@@ -120,7 +148,7 @@ const Products = () => {
                 }
             });
         return () => ctrl.abort();
-    }, [currentPage, selectedCategory, searchTerm, sort, reloadKey]);
+    }, [currentPage, selectedCategory, searchTerm, sort, reloadKey, extraKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const goToPage = (n) => {
         if (n < 1 || n > totalPages || n === currentPage) return;
@@ -137,7 +165,8 @@ const Products = () => {
     const menu = (categories || []).filter((c) => c.productCount > 0 || c._id === selectedCategory).sort((a, b) => b.productCount - a.productCount);
     const active = menu.find((c) => c._id === selectedCategory);
     const dishTotal = menu.reduce((n, c) => n + (c.productCount || 0), 0);
-    const filtered = !!(selectedCategory || searchTerm);
+    const chips = filterChips(extra);
+    const filtered = !!(selectedCategory || searchTerm || chips.length);
     useDocumentTitle(active ? `${active.title} · Menu` : 'Menu');
     const clearAll = () => setSearchParams(new URLSearchParams(sort ? { sort } : {}));
 
@@ -219,6 +248,9 @@ const Products = () => {
                             </>
                         )}
                     </div>
+                    <button type="button" className={`fm-filter-btn${chips.length ? ' has-active' : ''}`} onClick={() => setFiltersOpen(true)} aria-haspopup="dialog">
+                        <i className="bi bi-sliders" /> Filters{chips.length > 0 && <span className="fm-filter-n">{chips.length}</span>}
+                    </button>
                     <label className="fm-sort">
                         Sort by
                         <select aria-label="Sort products" value={sort} onChange={(e) => updateParam('sort', e.target.value)}>
@@ -229,6 +261,17 @@ const Products = () => {
                         </select>
                     </label>
                 </div>
+
+                {chips.length > 0 && (
+                    <div className="fm-active" aria-label="Active filters">
+                        {chips.map(([key, label]) => (
+                            <button key={key} type="button" className="fm-pill is-on" onClick={() => removeChip(key)} aria-label={`Remove filter ${label}`}>
+                                {label} <i className="bi bi-x" />
+                            </button>
+                        ))}
+                    </div>
+                )}
+                {filtersOpen && <MenuFilters value={extra} onApply={applyFilters} onClose={() => setFiltersOpen(false)} />}
 
                 {firstLoad ? (
                     <div className="fh-dish-grid">

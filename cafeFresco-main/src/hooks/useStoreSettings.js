@@ -46,3 +46,10 @@ export function hoursSummary(hours) {
     }
     return groups.map((g) => `${DAYS[g.start]}${g.end !== g.start ? `–${DAYS[g.end]}` : ''} ${g.text}`).join(' · ');
 }
+
+// Typical delivery time in minutes from Store Info, or null when the shop hasn't published one
+export function useDeliveryEta() {
+    const s = useStoreSettings();
+    const eta = Number(s?.delivery?.etaMinutes);
+    return eta > 0 ? eta : null;
+}

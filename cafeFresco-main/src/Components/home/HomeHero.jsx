@@ -1,9 +1,11 @@
 import PropTypes from 'prop-types';
+import { useDeliveryEta } from '../../hooks/useStoreSettings';
 import { Link } from 'react-router-dom';
 import heroDish from '../../assets/Products/healthy.png';
 
 // Hero: serif headline, round dish with an offer badge, two service chips (reference layout, Cafe Fresco content)
 export default function HomeHero({ bestDeal, dishCount, categoryCount }) {
+    const eta = useDeliveryEta();
     const scrollToSteps = () => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
 
     return (
@@ -29,7 +31,7 @@ export default function HomeHero({ bestDeal, dishCount, categoryCount }) {
                         <div className="fh-hero-stats">
                             <div><b>{dishCount}+</b><span>Dishes on the menu</span></div>
                             <div><b>{categoryCount}</b><span>Categories</span></div>
-                            <div><b>30 min</b><span>Average delivery</span></div>
+                            {eta && <div><b>{eta} min</b><span>Typical delivery</span></div>}
                         </div>
                     )}
                 </div>
@@ -52,8 +54,8 @@ export default function HomeHero({ bestDeal, dishCount, categoryCount }) {
                         <div className="fh-chip">
                             <i className="bi bi-truck" style={{ background: '#FFF0DC', color: '#E8262B' }} />
                             <div>
-                                <b>Fast Delivery</b>
-                                <span>Hot at your door in ~30 mins</span>
+                                <b>{eta ? 'Fast Delivery' : 'Delivered Hot'}</b>
+                                <span>{eta ? `Hot at your door in about ${eta} mins` : 'Cooked to order, packed to stay hot'}</span>
                             </div>
                         </div>
                         <div className="fh-chip">

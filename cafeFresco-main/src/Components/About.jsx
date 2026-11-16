@@ -1,4 +1,5 @@
 import { useContext, useEffect } from 'react';
+import { useDeliveryEta } from '../hooks/useStoreSettings';
 import { Link } from 'react-router-dom';
 import productContext from '../Context/ProductContext';
 import { colorFor, imgUrl, onImgError, useReveal } from './home/useHomeData';
@@ -15,12 +16,13 @@ import './CSS/pages.css';
 const VALUES = [
     ['bi-basket2', 'Fresh ingredients', 'Vegetables, herbs and meat bought fresh and prepped in our kitchen every morning.', '#3E9B48'],
     ['bi-fire', 'Cooked to order', 'Nothing sits under a lamp — your dish is made when you order it.', '#E8262B'],
-    ['bi-truck', 'Hot at your door', 'Packed to keep the heat in and delivered in about 30 minutes.', '#FF8A1F'],
+    ['bi-truck', 'Hot at your door', 'Packed to keep the heat in and brought straight to your door.', '#FF8A1F'],
     ['bi-tag', 'Fair prices', 'Honest portions and prices, with real discounts shown upfront.', '#F2B705']
 ];
 
 const About = () => {
     const { categories } = useContext(productContext);
+    const eta = useDeliveryEta();
     const r1 = useReveal();
     const r2 = useReveal();
     const r3 = useReveal();
@@ -73,7 +75,7 @@ const About = () => {
                 <div className="fa-stats">
                     <div className="fa-stat"><i className="bi bi-egg-fried" /><b>{dishes || '—'}</b><span>Dishes to choose from</span></div>
                     <div className="fa-stat"><i className="bi bi-grid" /><b>{menu.length || '—'}</b><span>Menu categories</span></div>
-                    <div className="fa-stat"><i className="bi bi-stopwatch" /><b>~30 min</b><span>Average delivery</span></div>
+                    {eta && <div className="fa-stat"><i className="bi bi-stopwatch" /><b>~{eta} min</b><span>Typical delivery</span></div>}
                     <div className="fa-stat"><i className="bi bi-wallet2" /><b>2 ways</b><span>Card or cash on delivery</span></div>
                 </div>
             </section>
@@ -147,7 +149,7 @@ const About = () => {
                 <div className="fp-cta">
                     <div>
                         <h2>Hungry already?</h2>
-                        <p>Browse the full menu and get it hot at your door in about 30 minutes.</p>
+                        <p>Browse the full menu and get it hot at your door{eta ? ` in about ${eta} minutes` : ''}.</p>
                     </div>
                     <div className="fp-cta-btns">
                         <Link to="/products" className="fh-btn fh-btn-white">Order now <i className="bi bi-arrow-right" /></Link>

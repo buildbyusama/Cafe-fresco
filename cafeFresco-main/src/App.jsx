@@ -21,6 +21,7 @@ import ResetPassword from './Components/Reset';
 import { Toaster } from 'react-hot-toast';
 import { RequireAuth, GuestOnly } from './Components/RouteGuards';
 import useDocumentTitle from './hooks/useDocumentTitle';
+import ChatLauncher from './Components/chat/ChatLauncher';
 
 // Route-level page title (the product page sets its own from the product name)
 const Titled = ({ title, children }) => { useDocumentTitle(title); return children; };
@@ -63,6 +64,7 @@ function Layout() {
 
       </Routes>
       <Footer />
+      <ChatLauncher />
     </>
   );
 }

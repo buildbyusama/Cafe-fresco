@@ -27,7 +27,7 @@ const TOPICS = ['Order help', 'Catering & big orders', 'Feedback', 'Something el
 // Answers that match how the shop actually works
 const FAQ = [
     ['How can I pay?', 'Pay securely by card online, or choose cash on delivery at checkout.'],
-    ['How long does delivery take?', 'Most orders arrive in about 30 minutes. You can follow every step under My Orders.'],
+    ['How long does delivery take?', 'It depends on your area and how busy the kitchen is. You can follow every step of your order under My Orders.'],
     ['Can I cancel my order?', 'Yes — while an order is still pending and unpaid you can cancel it yourself from My Orders. After that, send us a message and we will help.'],
     ['How do discount codes work?', 'Enter your code in the cart before checkout. Each code has its own rules, such as a minimum order or an expiry date.'],
     ['Can I leave a review?', 'Reviews are open for dishes you have received, so every review comes from a real order.']

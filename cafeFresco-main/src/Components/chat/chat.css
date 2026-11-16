@@ -1,0 +1,461 @@
+/* AI assistant widget (Foody theme tokens from landing.css) */
+.cc-launcher {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 1050;
+    height: 56px;
+    padding: 0 20px 0 18px;
+    border: none;
+    border-radius: 999px;
+    background: var(--cf-red, #e8262b);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 14px 30px rgba(232, 38, 43, 0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.cc-launcher i {
+    font-size: 1.3rem;
+}
+
+.cc-launcher:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(232, 38, 43, 0.42);
+}
+
+.cc-panel {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 1050;
+    width: 390px;
+    height: min(600px, calc(100vh - 44px));
+    background: var(--cf-cream, #fff6ec);
+    border-radius: 26px;
+    box-shadow: 0 30px 70px rgba(80, 30, 0, 0.28);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-size: 0.92rem;
+}
+
+.cc-loading {
+    display: grid;
+    place-items: center;
+}
+
+.cc-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 12px 14px 16px;
+    background: linear-gradient(135deg, var(--cf-red, #e8262b), var(--cf-red-dark, #c8102e));
+    color: #fff;
+}
+
+.cc-head > div {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+}
+
+.cc-head small {
+    opacity: 0.85;
+    font-size: 0.75rem;
+}
+
+.cc-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--cf-yellow, #fdbe11);
+    color: var(--cf-ink, #1d1d1d);
+    display: grid;
+    place-items: center;
+    flex: none;
+}
+
+.cc-icon {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    flex: none;
+}
+
+.cc-icon:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.cc-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 14px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overscroll-behavior: contain;
+}
+
+.cc-msg {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 88%;
+}
+
+.cc-msg.is-user {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.cc-bubble {
+    padding: 10px 14px;
+    border-radius: 18px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.is-bot .cc-bubble {
+    background: #fff;
+    border-bottom-left-radius: 6px;
+    box-shadow: 0 2px 8px rgba(120, 60, 10, 0.06);
+    white-space: normal;
+}
+
+.is-user .cc-bubble {
+    background: var(--cf-red, #e8262b);
+    color: #fff;
+    border-bottom-right-radius: 6px;
+}
+
+.cc-bubble p {
+    margin: 0 0 6px;
+}
+
+.cc-bubble p:last-child {
+    margin-bottom: 0;
+}
+
+.cc-bubble ul {
+    margin: 4px 0 6px;
+    padding-left: 18px;
+}
+
+.cc-bubble a {
+    color: var(--cf-red, #e8262b);
+    font-weight: 600;
+}
+
+.cc-typing {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px 0;
+}
+
+.cc-typing i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #c9bfb3;
+    animation: ccDot 1s infinite ease-in-out;
+}
+
+.cc-typing i:nth-child(2) { animation-delay: 0.15s; }
+.cc-typing i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes ccDot {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+    40% { transform: translateY(-4px); opacity: 1; }
+}
+
+.cc-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cc-chips button {
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--cf-line, #f0e2d2);
+    background: #fff;
+    font-weight: 600;
+    font-size: 0.84rem;
+    color: var(--cf-ink, #1d1d1d);
+}
+
+.cc-chips button:hover {
+    border-color: var(--cf-red, #e8262b);
+    color: var(--cf-red, #e8262b);
+}
+
+.cc-cards {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+}
+
+.cc-dish,
+.cc-action {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: 0 2px 8px rgba(120, 60, 10, 0.06);
+}
+
+.cc-dish-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit !important;
+}
+
+.cc-dish img,
+.cc-action img {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex: none;
+    background: var(--cf-cream, #fff6ec);
+}
+
+.cc-dish-main span,
+.cc-action > div {
+    display: grid;
+    min-width: 0;
+    flex: 1;
+}
+
+.cc-dish b,
+.cc-action b {
+    font-size: 0.86rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cc-dish small,
+.cc-action small {
+    color: var(--cf-red, #e8262b);
+    font-weight: 700;
+}
+
+.cc-dish s {
+    color: var(--cf-muted, #8a7f73);
+    font-weight: 500;
+    margin-left: 6px;
+}
+
+.cc-dish em {
+    color: var(--cf-muted, #8a7f73);
+    font-style: normal;
+    font-weight: 500;
+}
+
+.cc-add {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--cf-yellow, #fdbe11);
+    color: var(--cf-ink, #1d1d1d);
+    flex: none;
+}
+
+.cc-add:disabled {
+    opacity: 0.45;
+}
+
+.cc-action {
+    flex-wrap: wrap;
+    border: 2px solid var(--cf-yellow, #fdbe11);
+}
+
+.cc-action.is-added {
+    border-color: #2e9a57;
+}
+
+.cc-action-btns {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.cc-btn-red,
+.cc-btn-ghost,
+.cc-login {
+    min-height: 40px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.84rem;
+    padding: 0 16px;
+    border: none;
+}
+
+.cc-btn-red {
+    flex: 1;
+    background: var(--cf-red, #e8262b);
+    color: #fff;
+}
+
+.cc-btn-ghost {
+    background: var(--cf-cream, #fff6ec);
+    color: var(--cf-ink, #1d1d1d);
+}
+
+.cc-done {
+    color: #1e7a45;
+    font-weight: 700;
+    font-size: 0.84rem;
+}
+
+.cc-muted {
+    color: var(--cf-muted, #8a7f73);
+    font-size: 0.82rem;
+}
+
+.cc-login {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    background: var(--cf-red, #e8262b);
+    color: #fff !important;
+    text-decoration: none;
+}
+
+.cc-feedback {
+    display: flex;
+    gap: 4px;
+}
+
+.cc-feedback button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--cf-muted, #8a7f73);
+}
+
+.cc-feedback button.is-on,
+.cc-feedback button:hover {
+    background: #fff;
+    color: var(--cf-red, #e8262b);
+}
+
+.cc-notice {
+    align-self: stretch;
+    background: #fdecec;
+    color: #b42318;
+    border-radius: 14px;
+    padding: 10px 12px;
+    font-size: 0.84rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.cc-notice button {
+    border: none;
+    background: #fff;
+    color: #b42318;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 6px 12px;
+}
+
+.cc-compose {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 10px 12px 6px;
+    background: #fff;
+    border-top: 1px solid var(--cf-line, #f0e2d2);
+}
+
+.cc-compose textarea {
+    flex: 1;
+    resize: none;
+    border: 1.5px solid var(--cf-line, #f0e2d2);
+    background: var(--cf-cream, #fff6ec);
+    border-radius: 16px;
+    padding: 11px 14px;
+    max-height: 120px;
+    font-size: 0.92rem;
+    outline: none;
+}
+
+.cc-compose textarea:focus {
+    border-color: var(--cf-yellow, #fdbe11);
+    background: #fff;
+}
+
+.cc-send {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: none;
+    background: var(--cf-red, #e8262b);
+    color: #fff;
+    flex: none;
+}
+
+.cc-send:disabled {
+    background: #d9d2ca;
+}
+
+.cc-send.is-stop {
+    background: var(--cf-ink, #1d1d1d);
+}
+
+.cc-privacy {
+    margin: 0;
+    padding: 0 14px 10px;
+    background: #fff;
+    color: var(--cf-muted, #8a7f73);
+    font-size: 0.7rem;
+    text-align: center;
+}
+
+/* phones: full screen, launcher as a round button above the bottom edge */
+@media (max-width: 640px) {
+    .cc-panel {
+        inset: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
+        border-radius: 0;
+    }
+
+    .cc-launcher {
+        right: 14px;
+        bottom: 14px;
+        width: 56px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .cc-launcher span {
+        display: none;
+    }
+}

@@ -30,6 +30,19 @@ async function embedProducts(ids) {
     return { embedded: todo.length, skipped: products.length - todo.length };
 }
 
+// FAQ entries: same hash-skip approach. Returns { embedded, skipped }.
+async function embedKnowledge(ids) {
+    const Knowledge = require('../../models/knowledge');
+    const entries = await Knowledge.find(ids ? { _id: { $in: ids } } : {}).select('+embeddingHash question answer').lean();
+    const todo = entries.map((e) => ({ e, text: `${e.question}\n${e.answer}` })).filter(({ e, text }) => e.embeddingHash !== hashOf(text));
+    for (let i = 0; i < todo.length; i += 64) {
+        const batch = todo.slice(i, i + 64);
+        const vectors = await embed(batch.map((x) => x.text));
+        await Knowledge.bulkWrite(batch.map(({ e, text }, j) => ({ updateOne: { filter: { _id: e._id }, update: { $set: { embedding: vectors[j], embeddingHash: hashOf(text) } } } })));
+    }
+    return { embedded: todo.length, skipped: entries.length - todo.length };
+}
+
 // After a save: wait 2 s (several quick saves become one call), never block the request
 const pending = new Set();
 let timer = null;
@@ -145,4 +158,4 @@ async function semanticSearch(query, { limit = 8, inStockOnly = true, ...filters
     return { products: scored.slice(0, limit).map((s) => s.p), mode: 'semantic' };
 }
 
-module.exports = { textFor, embedProducts, scheduleEmbed, semanticSearch, structuredFilter, bust, cosine };
+module.exports = { textFor, embedProducts, embedKnowledge, scheduleEmbed, semanticSearch, structuredFilter, bust, cosine };

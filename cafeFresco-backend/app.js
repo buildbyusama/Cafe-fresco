@@ -108,6 +108,7 @@ app.use('/settings', settingsRoutes);
 app.use('/events', require('./routes/events'));
 app.use('/reco', require('./routes/reco'));
 app.use('/chat', require('./routes/chat'));
+app.use('/knowledge', require('./routes/knowledge'));
 
 // Unknown routes → JSON 404 (never an HTML page)
 app.use((req, res) => {

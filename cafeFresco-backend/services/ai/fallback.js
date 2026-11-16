@@ -81,7 +81,10 @@ async function respond(text, ctx) {
     const p = plan(text);
     if (p.refuse) return { content: p.refuse, cards: [], toolRuns: [] };
     if (p.greet) return { content: GREETING, cards: [], toolRuns: [] };
-    let runs = await Promise.all(p.calls.map((c) => tools.run(c.name, c.arguments, ctx)));
+    // store-fact questions ("do you deliver birthday cakes?") may have a more specific staff FAQ answer: ask both
+    const calls = p.calls.some((c) => c.name === 'get_store_info') ? [call('search_knowledge', { query: String(text).slice(0, 300) }), ...p.calls] : p.calls;
+    let runs = await Promise.all(calls.map((c) => tools.run(c.name, c.arguments, ctx)));
+    runs = runs.filter((r) => r.name !== 'search_knowledge' || r.data?.entries?.length || !p.calls.some((c) => c.name === 'get_store_info'));
     const search = runs.find((r) => r.name === 'search_menu');
     const found = search?.data?.items?.[0];
     if (p.addQty && found) runs = [await tools.run('propose_add_to_cart', { productId: found.id, quantity: p.addQty }, ctx)];

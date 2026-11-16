@@ -335,3 +335,13 @@ Before deployment:
 ## Developed By
 
 Developed by Muhammad Ismaeel.
+
+## AI assistant (OpenAI)
+
+The chat assistant and smart search use OpenAI through `services/ai/client.js` (the only place that talks to OpenAI).
+
+- Set `OPENAI_API_KEY` in `.env`. Without it the shop still works and the assistant answers with built-in rules.
+- Defaults: `OPENAI_MODEL=gpt-4o-mini` (chat) and `OPENAI_EMBED_MODEL=text-embedding-3-small` (search). Both can be changed in `.env`.
+- Cost guard: `AI_DAILY_TOKEN_BUDGET` (default 2,000,000 tokens a day). Above it the assistant switches to rule-based answers until midnight (`APP_TZ`). Also set a monthly limit in your OpenAI account.
+- `AI_MOCK=true` gives scripted offline answers, used by the tests (`FYP/tests`). Never enable it in production; the server refuses to start if you do.
+- Every call has a timeout (`AI_TIMEOUT_MS`, default 20 s) and one retry on 429/5xx.

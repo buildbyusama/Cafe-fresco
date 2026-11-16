@@ -1,0 +1,8 @@
+{
+  "name": "cafefresco-tests",
+  "private": true,
+  "description": "End-to-end and API tests. Run from this folder: node <file>.js (backend, shop and dashboard must be running)",
+  "dependencies": {
+    "playwright": "1.49.1"
+  }
+}

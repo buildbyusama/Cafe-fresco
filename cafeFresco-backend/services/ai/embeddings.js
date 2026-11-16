@@ -53,7 +53,10 @@ function scheduleEmbed(id) {
 let vectors = null; // [{ id, vec }] for active dishes
 let vectorsAt = 0;
 const VECTOR_TTL = 5 * 60 * 1000;
-function bust() { vectors = null; }
+function bust() {
+    vectors = null;
+    require('../recommendations').bust();
+}
 
 async function loadVectors() {
     if (vectors && Date.now() - vectorsAt < VECTOR_TTL) return vectors;

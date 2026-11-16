@@ -104,6 +104,7 @@ app.use('/supplier', supplier);
 app.use('/distributer', distributer);
 app.use('/settings', settingsRoutes);
 app.use('/events', require('./routes/events'));
+app.use('/reco', require('./routes/reco'));
 
 // Unknown routes → JSON 404 (never an HTML page)
 app.use((req, res) => {

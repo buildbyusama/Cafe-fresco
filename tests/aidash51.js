@@ -68,8 +68,9 @@ const { model, bcrypt, URL, ADMIN, check, connect, done, tag } = require('./lib'
         await p.keyboard.press('Escape');
         await p.waitForTimeout(300);
         await p.getByRole('button', { name: 'Create FAQ' }).first().click();
-        await p.waitForTimeout(800);
-        check('"Create FAQ" opens the knowledge page with the question prefilled', /\/admin\/ai-knowledge\?new=/.test(p.url()));
+        await p.getByRole('dialog').getByLabel('Question').waitFor({ timeout: 15000 });
+        check('"Create FAQ" opens the knowledge page with the question prefilled', /\/admin\/ai-knowledge/.test(p.url()) && (await p.getByRole('dialog').getByLabel('Question').inputValue()) === q);
+        await p.keyboard.press('Escape');
         if (process.argv[2]) {
             await p.goto(`${URL.DASH}/admin/ai-insights`);
             await p.waitForTimeout(3000);

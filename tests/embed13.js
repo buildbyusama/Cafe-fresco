@@ -35,7 +35,7 @@ const { model, backend, URL, check, connect, done, tag } = require('./lib');
         check('structured filters apply (maxPrice 5 → none at $6)', priced.products.length === 0);
 
         // debounce: 30 quick saves → 1 embedding call
-        const day = now().format('YYYY-MM-DD');
+        const day = `mock:${now().format('YYYY-MM-DD')}`;
         await Product.updateOne({ _id: pizza._id }, { description: 'Stone baked pizza with extra mozzarella cheese' });
         const before = (await AiUsage.findOne({ day }).lean())?.embedCalls || 0;
         for (let i = 0; i < 30; i++) emb.scheduleEmbed(pizza._id);

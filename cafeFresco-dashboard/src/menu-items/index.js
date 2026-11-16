@@ -7,11 +7,12 @@ import User from './User'
 import other from './other'
 import workforce from './workforce';
 import inventory from './inventory';
+import ai from './ai';
 
 // ==============================|| MENU ITEMS ||============================== //
 
 const menuItems = {
-  items: [dashboard, Categories, Products, Orders, Permissions, User, workforce, inventory, other]
+  items: [dashboard, Categories, Products, Orders, Permissions, User, workforce, inventory, ai, other]
 };
 
 export default menuItems;

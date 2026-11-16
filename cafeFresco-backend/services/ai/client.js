@@ -23,7 +23,8 @@ const openai = () => {
     return sdk;
 };
 
-const today = () => now().format('YYYY-MM-DD');
+// mock (test) usage is counted under its own key, so it never touches the real budget or cost figures
+const today = () => `${ai().mock ? 'mock:' : ''}${now().format('YYYY-MM-DD')}`;
 
 const status = () => (ai().mock ? 'mock' : ai().apiKey ? 'enabled' : 'disabled');
 

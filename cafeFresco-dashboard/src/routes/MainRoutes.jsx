@@ -23,6 +23,7 @@ const AddCategory = Loadable(lazy(() => import('views/pages/category/addCategory
 const EditCategory = Loadable(lazy(() => import('views/pages/category/EditCategory')));
 const AllDiscount = Loadable(lazy(() => import('views/pages/discountCode/discount.jsx')));
 const StoreInfo = Loadable(lazy(() => import('views/pages/settings/StoreInfo.jsx')));
+const AiInsights = Loadable(lazy(() => import('views/pages/ai/AiInsights.jsx')));
 const Departments = Loadable(lazy(() => import('views/pages/department/department.jsx')));
 const Distributor = Loadable(lazy(() => import('views/pages/distributor/distributor.jsx')));
 const AddEmployee = Loadable(lazy(() => import('views/pages/employee/addEmployee.jsx')));
@@ -101,6 +102,10 @@ const MainRoutes = {
             {
               path: 'discount-code',
               element: <RequireRole route="discounts"><AllDiscount /></RequireRole>
+            },
+            {
+              path: 'ai-insights',
+              element: <RequireRole route="aiInsights"><AiInsights /></RequireRole>
             },
             {
               path: 'store-info',

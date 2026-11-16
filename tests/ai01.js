@@ -5,7 +5,7 @@ const { model, backend, check, connect, done } = require('./lib');
     await connect();
     const AiUsage = model('aiUsage');
     const { now } = backend('services/stats');
-    const day = now().format('YYYY-MM-DD');
+    const day = `mock:${now().format('YYYY-MM-DD')}`;
     const before = (await AiUsage.findOne({ day }).lean()) || { tokensIn: 0, tokensOut: 0, calls: 0 };
     const client = backend('services/ai/client');
     const tools = backend('services/ai/tools').schemas();

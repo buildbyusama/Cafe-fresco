@@ -87,8 +87,14 @@ module.exports = [
         name: 'search_knowledge',
         description: "The shop's FAQ written by staff (e.g. parking, catering, events, halal, kids). Use for questions not about dishes, orders or the basic store info.",
         parameters: { type: 'object', additionalProperties: false, required: ['query'], properties: { query: { type: 'string' } } },
+        maxOutput: 4000, // may carry document passages (see below)
         async handler({ query }) {
             const entries = await searchKnowledge(query);
+            // no FAQ entry: a shop document may cover it (the model doesn't always call search_documents too)
+            if (!entries.length) {
+                const docs = await require('./documents').searchDocs(String(query).slice(0, 300)).catch(() => null);
+                if (docs) return { data: { entries: [], ...docs.data, note: 'No FAQ entry, but a shop document covers this: answer from the document and name it.' }, cards: docs.cards };
+            }
             return { data: entries.length ? { entries } : { entries: [], note: 'No FAQ entry answers this. Say you do not know and suggest the Contact page.' } };
         },
     },

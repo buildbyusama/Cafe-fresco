@@ -712,3 +712,50 @@
     white-space: nowrap;
     flex: none;
 }
+
+/* profile picture with change / remove buttons */
+.fp-avatar-wrap {
+    position: relative;
+    flex: none;
+}
+
+.fp-avatar {
+    overflow: hidden;
+    transition: opacity 0.15s;
+}
+
+.fp-avatar.is-busy {
+    opacity: 0.55;
+}
+
+.fp-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fp-avatar-actions {
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    display: flex;
+    gap: 4px;
+}
+
+.fp-avatar-actions button {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    background: var(--cf-ink);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 0.85rem;
+    padding: 0;
+}
+
+.fp-avatar-actions button:hover:not(:disabled) {
+    background: var(--cf-yellow);
+    color: var(--cf-ink);
+}

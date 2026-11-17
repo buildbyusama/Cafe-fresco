@@ -2,6 +2,7 @@ const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
 const fs = require('fs');
+const imageStore = require('../services/storage');
 
 // Ensure upload directories exist
 const productImageDir = path.join(__dirname, '../public/images/product');
@@ -61,15 +62,35 @@ const upload = (type) => {
                 const message = err.code === 'LIMIT_FILE_SIZE' ? `Image is too large (max ${process.env.UPLOAD_MAX_MB || 2} MB)` : err.message;
                 return res.status(400).json({ message });
             }
-            // If the handler ends in an error, delete the file it just received (no orphans on disk)
-            if (req.file) {
+            if (!req.file) return next();
+            const folder = req.uploadType === 'product' || req.uploadType === 'category' ? req.uploadType : 'user';
+            // req.file.storedUrl is what routes save on the document (local path, or Cloudinary when configured)
+            const finish = () => {
+                // If the handler ends in an error, delete the file it just received (no orphans)
                 const json = res.json.bind(res);
                 res.json = (body) => {
-                    if (res.statusCode >= 400 && req.file?.path) fs.unlink(req.file.path, () => {});
+                    if (res.statusCode >= 400) imageStore.remove(req.file.storedUrl);
                     return json(body);
                 };
+                next();
+            };
+            if (imageStore.driver() !== 'cloudinary') {
+                req.file.storedUrl = `/images/${folder}/${req.file.filename}`;
+                return finish();
             }
-            next();
+            fs.promises
+                .readFile(req.file.path)
+                .then((buffer) => imageStore.save(buffer, { folder, ext: path.extname(req.file.originalname).slice(1).toLowerCase() || 'jpg' }))
+                .then((url) => {
+                    req.file.storedUrl = url;
+                    fs.unlink(req.file.path, () => {});
+                    finish();
+                })
+                .catch((e) => {
+                    fs.unlink(req.file.path, () => {});
+                    console.error('Image upload to storage failed:', e.message);
+                    res.status(502).json({ message: 'Could not store the image. Please try again.' });
+                });
         });
     };
 };

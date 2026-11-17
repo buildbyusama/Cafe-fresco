@@ -2,6 +2,7 @@ import './CSS/landing.css';
 import logo from '../assets/logo/logo-transparent.png';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import productContext from '../Context/ProductContext';
+import { imgUrl } from './home/useHomeData';
 import { useContext, useEffect, useRef, useState } from 'react';
 
 const LINKS = [
@@ -82,7 +83,7 @@ const Navbar = () => {
                         {signedIn ? (
                             <div ref={menuRef} style={{ position: 'relative' }} className="cf-hide-md">
                                 <button type="button" className="cf-signin" onClick={() => setMenu((m) => !m)} aria-haspopup="menu" aria-expanded={menu} style={{ padding: '5px 12px 5px 5px' }}>
-                                    <span className="cf-avatar">{initials(user?.name)}</span>
+                                    <span className="cf-avatar">{user?.image ? <img src={imgUrl(user.image)} alt="" /> : initials(user?.name)}</span>
                                     <span>{user?.name?.split(' ')[0] || 'Account'}</span>
                                     <i className="bi bi-chevron-down" style={{ fontSize: '0.75rem' }} />
                                 </button>

@@ -65,12 +65,8 @@ function parseFoodFacts(body, data, fields) {
 }
 // Optional "stock I was looking at" for conflict detection; absent or invalid → no check (older clients)
 const parseExpected = (v) => (v === undefined || v === '' || !Number.isInteger(Number(v)) ? undefined : Number(v));
-const imageFile = (image) => path.join(__dirname, '..', 'public', String(image || '').replace(/^\/+/, ''));
-const removeImage = (image) => {
-    if (!image) return;
-    const file = imageFile(image);
-    if (fs.existsSync(file)) fs.unlink(file, () => {});
-};
+// stored images (local file or Cloudinary) go through services/storage.js
+const removeImage = (image) => require('../services/storage').remove(image);
 
 // Pick allowed fields and validate them → { data } or { error, fields }
 async function parseProductInput(body, { partial }) {
@@ -131,7 +127,7 @@ router.post('/add', isAdmin, authorizeRoles("editor", "manager", "admin"), uploa
             return res.status(409).json({ message: 'A product with this title already exists', fields: { title: 'Title already used' } });
         }
 
-        saved = await Product.create({ ...parsed.data, image: req.file ? `/images/product/${req.file.filename}` : '' });
+        saved = await Product.create({ ...parsed.data, image: req.file ? req.file.storedUrl : '' });
         const inventory = await setStock(saved._id, parsed.stock);
         saved.inventory = inventory._id;
         await saved.save();
@@ -168,7 +164,7 @@ router.put('/update/:id', isAdmin, authorizeRoles("editor", "manager", "admin"),
 
         const updates = parsed.data;
         if (req.file) {
-            updates.image = `/images/product/${req.file.filename}`;
+            updates.image = req.file.storedUrl;
         } else if (toBool(req.body.removeImage)) {
             updates.image = '';
         }

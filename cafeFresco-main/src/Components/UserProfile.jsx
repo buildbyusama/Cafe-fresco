@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import productContext from '../Context/ProductContext';
 import toast from 'react-hot-toast';
 import { apiFetch } from '../api';
+import AvatarPicker from './account/AvatarPicker';
 
 // Mirrors the backend rules (utils/validation.js PHONE_REGEX, update-profile limits)
 const PHONE_REGEX = /^\+?[0-9\s-]{7,15}$/;
@@ -105,7 +106,7 @@ const UserProfile = () => {
                 </nav>
 
                 <div className="fp-card-hero">
-                    <div className="fp-avatar" aria-hidden="true">{initials(user.name)}</div>
+                    <AvatarPicker initials={initials(user.name)} />
                     <div className="fp-who">
                         <h1 data-testid="profile-heading">{user.name}</h1>
                         <p>{user.email}</p>

@@ -104,7 +104,7 @@ router.post('/logout', (req, res) => {
 // Current session from the DB (the frontend never reads the cookie)
 router.get('/me', isLogged, async (req, res) => {
     try {
-        const user = await userModal.findById(req.user.userId).select('name email phone address');
+        const user = await userModal.findById(req.user.userId).select('name email phone address image');
         if (!user) {
             res.clearCookie('userToken', userCookieOptions({ clear: true }));
             return res.status(401).json({ message: 'Session expired' });
@@ -317,6 +317,56 @@ router.post('/contact', contactLimiter, async (req, res) => {
     } catch (err) {
         console.error('Error sending mail:', err.message);
         res.status(502).json({ message: 'We could not send your message right now. Please try again later.' });
+    }
+});
+
+// ---- profile picture (SRS 4.1) ----
+const multer = require('multer');
+const sharp = require('sharp');
+const storage = require('../services/storage');
+const avatarUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: Number(process.env.UPLOAD_MAX_MB || 2) * 1024 * 1024, files: 1 } }).single('image');
+const avatarLimiter = createLimiter({ windowMs: 60 * 60 * 1000, max: 20, message: 'Too many uploads, please try again later.' });
+
+router.post('/avatar', isLogged, avatarLimiter, (req, res) => {
+    avatarUpload(req, res, async (err) => {
+        if (err) return res.status(400).json({ message: err.code === 'LIMIT_FILE_SIZE' ? `Image must be under ${process.env.UPLOAD_MAX_MB || 2} MB` : 'Upload one image file' });
+        if (!req.file) return res.status(400).json({ message: 'Choose an image to upload' });
+        let url = null;
+        try {
+            // trust the file's contents, not its name: sharp only decodes real images
+            const meta = await sharp(req.file.buffer).metadata().catch(() => null);
+            if (!meta || !['jpeg', 'png', 'webp'].includes(meta.format)) return res.status(400).json({ message: 'Use a JPG, PNG or WEBP image' });
+            // 256×256, re-encoded: camera EXIF (incl. GPS location) is dropped
+            const buffer = await sharp(req.file.buffer).rotate().resize(256, 256, { fit: 'cover' }).webp({ quality: 82 }).toBuffer();
+            url = await storage.save(buffer, { folder: 'user', ext: 'webp' });
+            const before = await userModal.findById(req.user.userId).select('image');
+            if (!before) {
+                await storage.remove(url);
+                return res.status(404).json({ message: 'User not found' });
+            }
+            await userModal.updateOne({ _id: req.user.userId }, { $set: { image: url } });
+            if (before.image) await storage.remove(before.image);
+            res.json({ message: 'Profile picture updated', image: url });
+        } catch (e) {
+            if (url) storage.remove(url); // never leave an orphan file
+            console.error('Avatar upload failed:', e);
+            res.status(500).json({ message: 'Could not save the picture. Please try again.' });
+        }
+    });
+});
+
+router.delete('/avatar', isLogged, async (req, res) => {
+    try {
+        const user = await userModal.findById(req.user.userId).select('image');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        if (user.image) {
+            await userModal.updateOne({ _id: user._id }, { $set: { image: '' } });
+            await storage.remove(user.image);
+        }
+        res.json({ message: 'Profile picture removed' });
+    } catch (e) {
+        console.error('Avatar delete failed:', e);
+        res.status(500).json({ message: 'Could not remove the picture' });
     }
 });
 

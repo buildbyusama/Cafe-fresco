@@ -9,12 +9,8 @@ const fs = require('fs');
 const upload = require('../middleware/multer')
 const { escapeRegex } = require('../utils/validation');
 
-const removeImage = (image) => {
-    if (!image) return;
-    fs.unlink(path.join(__dirname, '..', 'public', image.replace(/^\/+/, '')), (err) => {
-        if (err && err.code !== 'ENOENT') console.error('Could not delete category image:', err.message);
-    });
-};
+// stored images (local file or Cloudinary) go through services/storage.js
+const removeImage = (image) => require('../services/storage').remove(image);
 
 // "Drinks" and "drinks" are the same category
 const titleTaken = (title, excludeId) =>
@@ -35,7 +31,7 @@ router.post("/add", isAdmin, authorizeRoles("editor", "manager", "admin"), uploa
 
         const newCategory = await categoryModal.create({
             title,
-            image: req.file ? `/images/category/${req.file.filename}` : "",
+            image: req.file ? req.file.storedUrl : "",
             description,
         });
 
@@ -67,7 +63,7 @@ router.put('/update/:id', isAdmin, authorizeRoles('editor', 'manager', 'admin'),
         }
         // An empty description is a valid way to clear it
         if (req.body.description !== undefined) updateData.description = String(req.body.description).trim();
-        if (req.file) updateData.image = `/images/category/${req.file.filename}`;
+        if (req.file) updateData.image = req.file.storedUrl;
 
         if (!Object.keys(updateData).length) {
             return res.status(400).json({ message: 'Nothing to update' });

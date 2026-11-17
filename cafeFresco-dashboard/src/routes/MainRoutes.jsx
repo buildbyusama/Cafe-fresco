@@ -26,6 +26,7 @@ const StoreInfo = Loadable(lazy(() => import('views/pages/settings/StoreInfo.jsx
 const AiInsights = Loadable(lazy(() => import('views/pages/ai/AiInsights.jsx')));
 const ActivityLog = Loadable(lazy(() => import('views/pages/audit/ActivityLog.jsx')));
 const AiKnowledge = Loadable(lazy(() => import('views/pages/ai/AiKnowledge.jsx')));
+const AiDocuments = Loadable(lazy(() => import('views/pages/ai/AiDocuments.jsx')));
 const AiSettings = Loadable(lazy(() => import('views/pages/ai/AiSettings.jsx')));
 const Departments = Loadable(lazy(() => import('views/pages/department/department.jsx')));
 const Distributor = Loadable(lazy(() => import('views/pages/distributor/distributor.jsx')));
@@ -109,6 +110,10 @@ const MainRoutes = {
             {
               path: 'ai-knowledge',
               element: <RequireRole route="aiKnowledge"><AiKnowledge /></RequireRole>
+            },
+            {
+              path: 'ai-documents',
+              element: <RequireRole route="aiDocuments"><AiDocuments /></RequireRole>
             },
             {
               path: 'ai-settings',

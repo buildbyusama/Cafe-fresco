@@ -28,7 +28,7 @@ router.get('/stats', ...viewers, async (req, res) => {
     try {
         const { start, end, labels } = window(req.query.range);
         const at = { $gte: start, $lte: end };
-        const [sessions, escalations, assistant, users, perDay, toolsUsed, usage, unanswered] = await Promise.all([
+        const [sessions, escalations, assistant, users, perDay, toolsUsed, usage, unanswered, docLookups, topSources, docMisses] = await Promise.all([
             ChatSession.countDocuments({ startedAt: at }),
             ChatSession.countDocuments({ escalated: true, lastAt: at }),
             ChatMessage.aggregate([
@@ -43,6 +43,18 @@ router.get('/stats', ...viewers, async (req, res) => {
             ChatMessage.aggregate([{ $match: { role: 'tool', at } }, { $group: { _id: '$toolName', n: { $sum: 1 } } }, { $sort: { n: -1 } }, { $limit: 10 }]),
             AiUsage.find({ day: { $gte: labels[0], $lte: labels.at(-1) } }).lean(),
             ChatMessage.find({ role: 'assistant', unanswered: true, at }).sort({ at: -1 }).limit(20).select('sessionId at').lean(),
+            // documents (RAG): how often they are searched, which ones answer, and what they don't cover
+            ChatMessage.countDocuments({ role: 'tool', toolName: 'search_documents', at }),
+            ChatMessage.aggregate([
+                { $match: { role: 'assistant', at, 'cards.type': 'source' } },
+                { $unwind: '$cards' },
+                { $match: { 'cards.type': 'source' } },
+                { $group: { _id: { m: '$_id', title: '$cards.title' } } }, // a document counts once per answer
+                { $group: { _id: '$_id.title', n: { $sum: 1 } } },
+                { $sort: { n: -1, _id: 1 } },
+                { $limit: 10 },
+            ]),
+            ChatMessage.find({ role: 'tool', toolName: 'search_documents', at, toolResultSummary: { $regex: '^\\{"passages":\\[\\]' } }).sort({ at: -1 }).limit(200).select('toolArgs').lean(),
         ]);
         const a = assistant[0] || { total: 0, fallback: 0, up: 0, down: 0, unanswered: 0, latency: 0 };
 
@@ -61,6 +73,17 @@ router.get('/stats', ...viewers, async (req, res) => {
                 return { sessionId: String(u.sessionId), question: q?.content?.slice(0, 200) || '', at: u.at };
             })
         );
+
+        // questions the documents couldn't answer, most asked first
+        const missCounts = new Map();
+        for (const m of docMisses) {
+            const question = String(m.toolArgs?.query || '').trim().slice(0, 200);
+            const k = normalise(question);
+            if (k.length < 3) continue;
+            const prev = missCounts.get(k);
+            missCounts.set(k, { question: prev?.question || question, count: (prev?.count || 0) + 1 });
+        }
+        const documentGaps = [...missCounts.values()].sort((x, y) => y.count - x.count).slice(0, 10);
 
         const tokensIn = usage.reduce((n, d) => n + (d.tokensIn || 0), 0);
         const tokensOut = usage.reduce((n, d) => n + (d.tokensOut || 0), 0);
@@ -85,6 +108,7 @@ router.get('/stats', ...viewers, async (req, res) => {
             tools: toolsUsed.map((t) => ({ tool: t._id, count: t.n })),
             topQuestions,
             unansweredList,
+            documents: { lookups: docLookups, topSources: topSources.map((x) => ({ title: x._id, count: x.n })), gaps: documentGaps },
         });
     } catch (err) {
         console.error('Chat stats failed:', err);
@@ -153,6 +177,7 @@ router.get('/sessions/:id', ...viewers, async (req, res) => {
                 feedback: m.feedback,
                 feedbackNote: m.feedbackNote,
                 unanswered: m.unanswered,
+                sources: (m.cards || []).filter((c) => c.type === 'source').map((c) => ({ title: c.title, section: c.section })),
                 at: m.at,
             })),
         });

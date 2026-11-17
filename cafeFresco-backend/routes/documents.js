@@ -35,6 +35,13 @@ function receiveFile(req, res, next) {
 }
 
 const titleFrom = (body, file) => String(body.title || '').trim() || path.parse(file.originalname || 'Document').name.replace(/[_-]+/g, ' ');
+// shown until processing finds the real type (a failed upload keeps this guess)
+const guessMime = (file) => {
+    const b = file.buffer;
+    if (b.subarray(0, 5).toString('latin1') === '%PDF-') return 'application/pdf';
+    if (b[0] === 0x50 && b[1] === 0x4b) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    return /.md$/i.test(file.originalname || '') ? 'text/markdown' : 'text/plain';
+};
 const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
 
 // What the admin sees (never vectors or internal ids of passages)
@@ -66,7 +73,7 @@ router.post('/', ...managers, uploadLimiter, receiveFile, async (req, res) => {
         if (title.length < 2) return res.status(400).json({ message: 'Give the document a title (2–80 characters).' });
         let doc;
         try {
-            doc = await Document.create({ title, fileName: req.file.originalname, mime: 'text/plain', sizeBytes: req.file.size, sha256: hash, uploadedBy: req.admin.userId, updatedBy: req.admin.userId });
+            doc = await Document.create({ title, fileName: req.file.originalname, mime: guessMime(req.file), sizeBytes: req.file.size, sha256: hash, uploadedBy: req.admin.userId, updatedBy: req.admin.userId });
         } catch (e) {
             if (e?.code === 11000) return res.status(409).json({ message: 'This file is already uploaded.' }); // two uploads at once
             throw e;

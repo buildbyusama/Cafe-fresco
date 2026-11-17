@@ -1,6 +1,6 @@
 // Tool registry for the assistant (A1, A3): OpenAI schemas, argument validation, safe outputs.
 // handler(args, ctx) → { data, cards? }. ctx = { userId|null, anonId, sessionId, userName, reqId }.
-const tools = [...require('./menu'), ...require('./store'), ...require('./account'), ...require('./escalate')];
+const tools = [...require('./menu'), ...require('./store'), ...require('./account'), ...require('./escalate'), ...require('./documents')];
 const byName = new Map(tools.map((t) => [t.name, t]));
 
 const MAX_OUTPUT = 1500; // default characters of JSON the model sees per tool call (a tool may set maxOutput)

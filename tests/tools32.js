@@ -27,7 +27,7 @@ const { model, backend, check, connect, done, tag } = require('./lib');
     const outputs = [];
     const keep = (r) => (outputs.push(r.content), r);
     try {
-        check('13 tools registered with OpenAI schemas', tools.names().length === 13 && tools.schemas().every((s) => s.type === 'function' && s.function.parameters.type === 'object'));
+        check('14 tools registered with OpenAI schemas (search_documents added in RAG R3.1)', tools.names().length === 14 && tools.schemas().every((s) => s.type === 'function' && s.function.parameters.type === 'object'));
 
         // menu
         const s1 = keep(await run('search_menu', { query: 'grilled beef burger', category: cat.title, limit: 3 }));

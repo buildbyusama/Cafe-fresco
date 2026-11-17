@@ -182,6 +182,45 @@ export default function AiInsights() {
                 </Paper>
             </Box>
 
+            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, mb: 2 }} data-testid="doc-insights">
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: '14px' }}>
+                    <Typography sx={{ fontWeight: 700 }}>Documents used</Typography>
+                    <Typography sx={{ fontSize: '0.75rem', color: '#8A877F', mb: 1 }}>{stats ? `${stats.documents?.lookups || 0} document lookup${stats.documents?.lookups === 1 ? '' : 's'} in this period` : ' '}</Typography>
+                    {!stats ? <Skeleton variant="rounded" height={120} /> : !stats.documents?.topSources.length ? (
+                        <Typography sx={{ fontSize: '0.8125rem', color: '#8A877F' }}>No answers came from documents yet.</Typography>
+                    ) : (
+                        <Table size="small">
+                            <TableBody>
+                                {stats.documents.topSources.map((s) => (
+                                    <TableRow key={s.title}>
+                                        <TableCell sx={{ pl: 0, overflowWrap: 'anywhere' }}>{s.title}</TableCell>
+                                        <TableCell align="right" sx={{ pr: 0, fontWeight: 700 }}>{s.count}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </Paper>
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: '14px' }}>
+                    <Typography sx={{ fontWeight: 700 }}>Not covered by documents</Typography>
+                    <Typography sx={{ fontSize: '0.75rem', color: '#8A877F', mb: 1 }}>Questions the documents had nothing on. Upload a document or add an FAQ entry.</Typography>
+                    {!stats ? <Skeleton variant="rounded" height={120} /> : !stats.documents?.gaps.length ? (
+                        <Typography sx={{ fontSize: '0.8125rem', color: '#8A877F' }}>No gaps found.</Typography>
+                    ) : (
+                        <Stack divider={<Divider flexItem />} spacing={1}>
+                            {stats.documents.gaps.slice(0, 8).map((g) => (
+                                <Stack key={g.question} data-testid="doc-gap" direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                                    <Typography sx={{ flex: 1, fontSize: '0.8125rem', minWidth: 0 }} noWrap title={g.question}>{g.question}</Typography>
+                                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 700 }}>{g.count}×</Typography>
+                                    <Button size="small" onClick={() => navigate('/admin/ai-documents')}>Upload a document</Button>
+                                    <Button size="small" variant="outlined" onClick={() => createFaq(g.question)}>Create FAQ</Button>
+                                </Stack>
+                            ))}
+                        </Stack>
+                    )}
+                </Paper>
+            </Box>
+
             <Paper variant="outlined" sx={{ borderRadius: '14px', overflow: 'hidden' }}>
                 <Stack direction="row" sx={{ p: 2, alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
                     <Typography sx={{ fontWeight: 700 }}>Conversations</Typography>
@@ -256,6 +295,11 @@ export default function AiInsights() {
                                 }}
                             >
                                 {m.role === 'tool' ? `↳ looked up ${m.content}` : m.content}
+                                {m.sources?.length > 0 && (
+                                    <Box sx={{ mt: 0.5, fontSize: '0.72rem', color: '#8A877F' }}>
+                                        Sources: {m.sources.map((s) => (s.section ? `${s.title} › ${s.section}` : s.title)).join(', ')}
+                                    </Box>
+                                )}
                                 {m.role === 'assistant' && (m.feedback || m.unanswered || m.source === 'fallback') && (
                                     <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
                                         {m.feedback === 'up' && <StatusPill tone="success" label="Helpful" />}

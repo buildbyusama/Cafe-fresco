@@ -214,6 +214,15 @@ export default function ChatPanel({ onClose, greeting }) {
                                 {m.cards.filter((c) => c.type === 'dish').slice(0, 4).map((c) => <DishMini key={c.id} card={c} busy={busyAdd === c.id} onAdd={(id, q) => addDish(id, q)} />)}
                             </div>
                         )}
+                        {!m.streaming && m.cards?.some((c) => c.type === 'source') && (
+                            <div className="cc-sources" aria-label="Sources">
+                                <span className="cc-sources-label">Sources</span>
+                                {m.cards.filter((c) => c.type === 'source').slice(0, 4).map((c) => {
+                                    const label = c.section ? `${c.title} › ${c.section}` : c.title;
+                                    return <span key={c.id || label} className="cc-source" title={label}>{label}</span>;
+                                })}
+                            </div>
+                        )}
                         {m.cards?.filter((c) => c.type === 'add_to_cart').map((c) => (
                             <ActionCard
                                 key={c.productId}

@@ -10,7 +10,10 @@ const fallback = require('./fallback');
 const { aiProblem } = require('../alerts');
 const { TZ, now } = require('../stats');
 
-const SYSTEM = fs.readFileSync(path.join(__dirname, 'prompts', 'system.v1.txt'), 'utf8');
+// AI_PROMPT_VERSION: v2 (default) adds the shop's documents (RAG); v1 is the original prompt without them
+const PROMPT_VERSION = process.env.AI_PROMPT_VERSION === 'v1' ? 'v1' : 'v2';
+const SYSTEM = fs.readFileSync(path.join(__dirname, 'prompts', `system.${PROMPT_VERSION}.txt`), 'utf8');
+const toolSchemas = () => tools.schemas().filter((t) => PROMPT_VERSION === 'v2' || t.function.name !== 'search_documents');
 const MAX_ROUNDS = 4;
 const MAX_PARALLEL = 3;
 const HISTORY = 12;
@@ -124,7 +127,7 @@ async function handleMessage({ sessionId, text, ctx, emit, signal }) {
                     ...recent,
                     { role: 'user', content: text },
                 ];
-                const schemas = tools.schemas();
+                const schemas = toolSchemas();
                 for (let round = 0; ; round++) {
                     const last = round >= MAX_ROUNDS; // out of rounds: answer with what we have, no more tools
                     // tokens go to the browser as they arrive (any short "let me check" before a tool call stays)

@@ -19,7 +19,7 @@ export default function PageToolbar({ onBack, summary, addLabel, onAdd, children
                     </Button>
                 )}
                 {summary && (
-                    <Typography sx={{ fontSize: '0.875rem', color: '#6B6B6B' }} noWrap>
+                    <Typography sx={{ fontSize: '0.875rem', color: '#6B6B6B', minWidth: 0, whiteSpace: { xs: 'normal', sm: 'nowrap' }, overflow: { sm: 'hidden' }, textOverflow: { sm: 'ellipsis' } }}>
                         {summary}
                     </Typography>
                 )}

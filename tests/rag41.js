@@ -62,7 +62,7 @@ const PARA = (s) => `Cafe Fresco catering ${s}: weddings and office events need 
         check('privacy badge shown', /Personal data\?/.test(await row(p, `Staff Sheet ${t}`).innerText()));
         await p.getByLabel(`Published: Staff Sheet ${t}`).click();
         await p.getByRole('dialog').getByText('may contain personal data').waitFor({ timeout: 5000 });
-        check('publishing asks for confirmation listing the flags', /phone numbers|email addresses/.test(await p.getByRole('dialog').innerText()));
+        check('publishing asks for confirmation listing the flags', /phone numbers?|email address(es)?/.test(await p.getByRole('dialog').innerText()));
         await p.getByRole('button', { name: 'Publish anyway' }).click();
         await p.waitForTimeout(800);
         check('confirmed → published', (await Document.findOne({ title: `Staff Sheet ${t}` }).lean()).isPublished === true);
@@ -85,7 +85,7 @@ const PARA = (s) => `Cafe Fresco catering ${s}: weddings and office events need 
         await p.getByLabel('Test question').fill('how many days notice for wedding catering');
         await p.getByRole('button', { name: 'Test', exact: true }).click();
         await p.getByTestId('test-results').waitFor({ timeout: 10000 });
-        check('test box shows passages with source and score', /score/.test(await p.getByTestId('test-results').innerText()));
+        check('test box shows passages with source and match strength', /(Strong|Good|Weak) match/.test(await p.getByTestId('test-results').innerText()));
 
         // detail drawer
         await row(p, `Wedding Guide ${t}`).getByRole('button', { name: `Wedding Guide ${t}`, exact: true }).click();

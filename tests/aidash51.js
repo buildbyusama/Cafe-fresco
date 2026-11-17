@@ -44,7 +44,7 @@ const { model, bcrypt, URL, ADMIN, check, connect, done, tag } = require('./lib'
         const row = list.sessions.find((x) => x.id === String(s1._id));
         check('escalated filter + first name only', row && row.customer === 'Zara' && row.escalated);
         check('thumbs-down filter finds it', (await (await ad.get('/chat/admin/sessions?filter=thumbs-down')).json()).sessions.some((x) => x.id === String(s1._id)));
-        check('guest shown as "Guest"', (await (await ad.get('/chat/admin/sessions')).json()).sessions.some((x) => x.id === String(s2._id) && x.customer === 'Guest'));
+        check('guest shown as "Guest"', (await (await ad.get('/chat/admin/sessions?limit=50')).json()).sessions.some((x) => x.id === String(s2._id) && x.customer === 'Guest'));
         const tr = await (await ad.get(`/chat/admin/sessions/${s1._id}`)).json();
         const trText = JSON.stringify({ customer: tr.customer, ...tr, messages: tr.messages.filter((m) => m.role !== 'assistant') });
         check('transcript: no customer email or phone from the account', !trText.includes(`zara${t}@x.com`) && !trText.includes('9998887') && tr.customer === 'Zara');

@@ -143,11 +143,11 @@ export function NotifyProvider({ children }) {
     }, []);
 
     const confirm = useCallback(
-        ({ title = 'Are you sure?', message = '', confirmText = 'Confirm', danger = false } = {}) =>
+        ({ title = 'Are you sure?', message = '', confirmText = 'Confirm', danger = false, warning = false } = {}) =>
             new Promise((resolve) => {
                 resolver.current = resolve;
-                setConfirmState({ title, message, confirmText, danger });
-                if (danger && soundEnabled()) playTone('warning');
+                setConfirmState({ title, message, confirmText, danger, warning });
+                if ((danger || warning) && soundEnabled()) playTone('warning');
             }),
         []
     );
@@ -158,7 +158,8 @@ export function NotifyProvider({ children }) {
         setConfirmState(null);
     };
 
-    const ConfirmIcon = confirmState?.danger ? IconTrash : IconInfoCircle;
+    // danger = destructive (delete); warning = a risky but non-destructive choice (e.g. publish personal data)
+    const ConfirmIcon = confirmState?.warning ? IconAlertTriangle : confirmState?.danger ? IconTrash : IconInfoCircle;
 
     return (
         <NotifyContext.Provider value={{ notify, confirm }}>
@@ -187,8 +188,8 @@ export function NotifyProvider({ children }) {
                                 flexShrink: 0,
                                 display: 'grid',
                                 placeItems: 'center',
-                                bgcolor: confirmState?.danger ? '#FDECEC' : '#FFF3D1',
-                                color: confirmState?.danger ? '#D32F2F' : '#C98A00'
+                                bgcolor: confirmState?.danger && !confirmState?.warning ? '#FDECEC' : '#FFF3D1',
+                                color: confirmState?.danger && !confirmState?.warning ? '#D32F2F' : '#C98A00'
                             }}
                         >
                             <ConfirmIcon size={22} stroke={1.8} />
@@ -204,7 +205,7 @@ export function NotifyProvider({ children }) {
                         <Button variant="outlined" color="inherit" onClick={() => closeConfirm(false)}>
                             Cancel
                         </Button>
-                        <Button onClick={() => closeConfirm(true)} variant="contained" color={confirmState?.danger ? 'error' : 'primary'} autoFocus>
+                        <Button onClick={() => closeConfirm(true)} variant="contained" color={confirmState?.warning ? 'warning' : confirmState?.danger ? 'error' : 'primary'} autoFocus>
                             {confirmState?.confirmText}
                         </Button>
                     </Stack>

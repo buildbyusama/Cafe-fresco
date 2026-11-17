@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Box, Button, Drawer, IconButton, LinearProgress, Paper, Stack, Switch, Table, TableBody, TableCell, TableHead, TableRow, TextField, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Drawer, IconButton, LinearProgress, Paper, Stack, Switch, Table, TableBody, TableCell, TableHead, TableRow, TextField, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { IconFileText, IconRefresh, IconReplace, IconTrash, IconUpload, IconX } from '@tabler/icons-react';
 import { MainContext } from '../../context/index.jsx';
 import { homeFor } from '../../../config/permissions';
@@ -14,9 +14,12 @@ import TableSkeleton from 'ui-component/TableSkeleton';
 const ACCEPT = '.pdf,.docx,.txt,.md';
 const OK_EXT = /\.(pdf|docx|txt|md)$/i;
 const TYPE = { 'application/pdf': 'PDF', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word', 'text/plain': 'Text', 'text/markdown': 'Markdown' };
-const PRIVACY = { email: 'email addresses', phone: 'phone numbers', card: 'card-like numbers', cnic: 'CNIC numbers' };
+const PRIVACY = { email: ['email address', 'email addresses'], phone: ['phone number', 'phone numbers'], card: ['card-like number', 'card-like numbers'], cnic: ['CNIC number', 'CNIC numbers'] };
 const size = (b) => (b >= 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
-const flagsText = (flags = []) => flags.map((f) => `${f.count} ${PRIVACY[f.type] || f.type}`).join(', ');
+const flagsText = (flags = []) => flags.map((f) => `${f.count} ${PRIVACY[f.type]?.[f.count === 1 ? 0 : 1] || f.type}`).join(', ');
+const metaText = (d) => [TYPE[d.mime] || 'File', size(d.sizeBytes), d.pages ? `${d.pages} page${d.pages === 1 ? '' : 's'}` : null, `${d.chunkCount} passage${d.chunkCount === 1 ? '' : 's'}`].filter(Boolean).join(' · ');
+// a retrieval score as a plain word for staff (scores are calibrated in docs/PERFORMANCE.md)
+const matchText = (score) => (score >= 0.55 ? 'Strong match' : score >= 0.4 ? 'Good match' : 'Weak match');
 
 function Status({ d }) {
     if (d.status === 'processing') return <StatusPill tone="neutral" label="Processing…" />;
@@ -40,6 +43,7 @@ export default function AiDocuments() {
     const [testQ, setTestQ] = useState('');
     const [testRes, setTestRes] = useState(null);
     const [testing, setTesting] = useState(false);
+    const phone = useMediaQuery((theme) => theme.breakpoints.down('sm'));
     const pickRef = useRef(null);
     const replaceRef = useRef(null);
     const replaceFor = useRef(null);
@@ -98,7 +102,7 @@ export default function AiDocuments() {
             notify.success(done);
         } catch (err) {
             if (err.data?.needsConfirmation) {
-                const ok = await confirm({ title: 'This document may contain personal data', message: `It looks like it contains ${flagsText(err.data.privacyFlags)}. Customers could see this text in answers. Publish anyway?`, confirmText: 'Publish anyway', danger: true });
+                const ok = await confirm({ title: 'This document may contain personal data', message: `It looks like it contains ${flagsText(err.data.privacyFlags)}. Customers could see this text in answers. Publish anyway?`, confirmText: 'Publish anyway', warning: true });
                 setBusyId(null);
                 if (ok) return patch(d, { ...body, confirmPrivacy: true }, done);
                 return undefined;
@@ -160,6 +164,26 @@ export default function AiDocuments() {
     };
 
     const limits = data?.limits;
+    const statusOf = (d) => (
+        <>
+            <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+                <Status d={d} />
+                {d.privacyFlags?.length > 0 && <Tooltip title={`May contain ${flagsText(d.privacyFlags)}`}><span><StatusPill tone="warning" label="Personal data?" /></span></Tooltip>}
+            </Stack>
+            {d.error && <Typography sx={{ fontSize: '0.75rem', color: d.status === 'failed' ? '#C62828' : '#8A6D00', mt: 0.5 }} data-testid="doc-error">{d.error}</Typography>}
+        </>
+    );
+    const publishOf = (d) => <Switch size="small" checked={d.isPublished} disabled={!d.servingVersion || busyId === d._id} onChange={() => togglePublish(d)} inputProps={{ 'aria-label': `Published: ${d.title}` }} />;
+    const actionsOf = (d) => (
+        <>
+            <Tooltip title="Replace file"><span><IconButton size="small" aria-label={`Replace file: ${d.title}`} disabled={d.status === 'processing' || uploading} onClick={() => { replaceFor.current = d; replaceRef.current?.click(); }}><IconReplace size={18} /></IconButton></span></Tooltip>
+            <Tooltip title="Re-index"><span><IconButton size="small" aria-label={`Re-index: ${d.title}`} disabled={!d.servingVersion || busyId === d._id} onClick={() => reindex(d)}><IconRefresh size={18} /></IconButton></span></Tooltip>
+            <Tooltip title="Delete"><span><IconButton size="small" aria-label={`Delete: ${d.title}`} disabled={busyId === d._id} onClick={() => remove(d)}><IconTrash size={18} /></IconButton></span></Tooltip>
+        </>
+    );
+    const titleOf = (d, max) => (
+        <Typography component="button" type="button" onClick={() => open(d)} title={d.title} sx={{ all: 'unset', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: max, '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', borderRadius: '4px' } }}>{d.title}</Typography>
+    );
     return (
         <Box>
             <PageToolbar onBack={() => navigate(homeFor(adminRole))} summary={limits ? `${limits.documents} of ${limits.maxDocs} documents · ${limits.passages.toLocaleString()} of ${limits.maxPassages.toLocaleString()} passages · only published ones are used` : 'Loading…'} />
@@ -196,7 +220,7 @@ export default function AiDocuments() {
                     <Stack spacing={1} sx={{ mt: 1 }} data-testid="test-results">
                         {testRes.passages.map((p, i) => (
                             <Box key={i} sx={{ p: 1.25, borderRadius: '10px', bgcolor: '#F6F5F2' }}>
-                                <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, overflowWrap: 'anywhere' }}>{p.source}{p.heading ? ` › ${p.heading}` : ''} <Box component="span" sx={{ fontWeight: 400, color: '#8A877F' }}>· score {p.score}</Box></Typography>
+                                <Typography sx={{ fontSize: '0.78rem', fontWeight: 700, overflowWrap: 'anywhere' }}>{p.source}{p.heading ? ` › ${p.heading}` : ''} <Box component="span" sx={{ fontWeight: 400, color: '#8A877F' }}>· {matchText(p.score)}</Box></Typography>
                                 <Typography sx={{ fontSize: '0.8rem', color: '#444', mt: 0.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{p.text}</Typography>
                             </Box>
                         ))}
@@ -213,43 +237,51 @@ export default function AiDocuments() {
             ) : data.documents.length === 0 ? (
                 <Box display="flex" justifyContent="center" my={4}><EmptyState icon={IconFileText} title="No documents yet" hint="Upload your catering guide, event packages or policies, then publish them." /></Box>
             ) : (
-                <Box sx={{ overflowX: 'auto' }}>
-                    <Table sx={{ minWidth: 640 }}>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Document</TableCell>
-                                <TableCell>Status</TableCell>
-                                <TableCell align="center">Published</TableCell>
-                                <TableCell align="right" />
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {data.documents.map((d) => (
-                                <TableRow key={d._id} hover sx={{ opacity: busyId === d._id ? 0.55 : 1 }} data-testid="doc-row">
-                                    <TableCell sx={{ maxWidth: 320 }}>
-                                        <Typography component="button" type="button" onClick={() => open(d)} sx={{ all: 'unset', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 300 }} title={d.title}>{d.title}</Typography>
-                                        <Typography sx={{ fontSize: '0.75rem', color: '#8A877F' }}>{[TYPE[d.mime] || 'File', size(d.sizeBytes), d.pages ? `${d.pages} page${d.pages === 1 ? '' : 's'}` : null, `${d.chunkCount} passage${d.chunkCount === 1 ? '' : 's'}`].filter(Boolean).join(' · ')}</Typography>
-                                    </TableCell>
-                                    <TableCell sx={{ maxWidth: 260 }}>
-                                        <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
-                                            <Status d={d} />
-                                            {d.privacyFlags?.length > 0 && <Tooltip title={`May contain ${flagsText(d.privacyFlags)}`}><span><StatusPill tone="warning" label="Personal data?" /></span></Tooltip>}
-                                        </Stack>
-                                        {d.error && <Typography sx={{ fontSize: '0.75rem', color: d.status === 'failed' ? '#C62828' : '#8A6D00', mt: 0.5 }} data-testid="doc-error">{d.error}</Typography>}
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Switch size="small" checked={d.isPublished} disabled={!d.servingVersion || busyId === d._id} onChange={() => togglePublish(d)} inputProps={{ 'aria-label': `Published: ${d.title}` }} />
-                                    </TableCell>
-                                    <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
-                                        <Tooltip title="Replace file"><span><IconButton size="small" aria-label={`Replace file: ${d.title}`} disabled={d.status === 'processing' || uploading} onClick={() => { replaceFor.current = d; replaceRef.current?.click(); }}><IconReplace size={18} /></IconButton></span></Tooltip>
-                                        <Tooltip title="Re-index"><span><IconButton size="small" aria-label={`Re-index: ${d.title}`} disabled={!d.servingVersion || busyId === d._id} onClick={() => reindex(d)}><IconRefresh size={18} /></IconButton></span></Tooltip>
-                                        <Tooltip title="Delete"><span><IconButton size="small" aria-label={`Delete: ${d.title}`} disabled={busyId === d._id} onClick={() => remove(d)}><IconTrash size={18} /></IconButton></span></Tooltip>
-                                    </TableCell>
+                phone ? (
+                    // phones: one card per document, every control visible without sideways scrolling
+                    <Stack spacing={1.25}>
+                        {data.documents.map((d) => (
+                            <Paper key={d._id} variant="outlined" data-testid="doc-row" sx={{ p: 1.5, borderRadius: '14px', opacity: busyId === d._id ? 0.55 : 1 }}>
+                                {titleOf(d, '100%')}
+                                <Typography sx={{ fontSize: '0.75rem', color: '#8A877F', mb: 1 }}>{metaText(d)}</Typography>
+                                {statusOf(d)}
+                                <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mt: 1, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+                                    <Stack direction="row" sx={{ alignItems: 'center' }}>
+                                        {publishOf(d)}
+                                        <Typography sx={{ fontSize: '0.8rem', color: '#6B6B6B' }}>{d.isPublished ? 'Published' : 'Draft'}</Typography>
+                                    </Stack>
+                                    <Box>{actionsOf(d)}</Box>
+                                </Stack>
+                            </Paper>
+                        ))}
+                    </Stack>
+                ) : (
+                    <Box sx={{ overflowX: 'auto' }}>
+                        <Table sx={{ minWidth: 640 }}>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Document</TableCell>
+                                    <TableCell>Status</TableCell>
+                                    <TableCell align="center">Published</TableCell>
+                                    <TableCell align="right"><Box component="span" sx={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>Actions</Box></TableCell>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </Box>
+                            </TableHead>
+                            <TableBody>
+                                {data.documents.map((d) => (
+                                    <TableRow key={d._id} hover sx={{ opacity: busyId === d._id ? 0.55 : 1 }} data-testid="doc-row">
+                                        <TableCell sx={{ maxWidth: 320 }}>
+                                            {titleOf(d, 300)}
+                                            <Typography sx={{ fontSize: '0.75rem', color: '#8A877F' }}>{metaText(d)}</Typography>
+                                        </TableCell>
+                                        <TableCell sx={{ maxWidth: 260 }}>{statusOf(d)}</TableCell>
+                                        <TableCell align="center">{publishOf(d)}</TableCell>
+                                        <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>{actionsOf(d)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </Box>
+                )
             )}
 
             <Drawer anchor="right" open={!!detail} onClose={() => setDetail(null)} PaperProps={{ sx: { width: { xs: '100%', sm: 440 }, p: 2 } }}>

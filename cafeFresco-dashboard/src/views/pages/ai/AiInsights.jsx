@@ -14,7 +14,7 @@ import StatusPill from 'ui-component/StatusPill';
 import IconTile from '../../dashboard/Default/IconTile';
 
 const when = (d) => new Date(d).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
-const TOOL_LABEL = { search_menu: 'Menu search', get_dish: 'Dish details', list_categories: 'Categories', get_deals: 'Deals', recommend: 'Recommendations', get_store_info: 'Store info', search_knowledge: 'FAQ', get_my_orders: 'My orders', get_order_status: 'Order status', get_my_cart: 'Cart', propose_add_to_cart: 'Add to cart', check_discount_code: 'Discount check', escalate_to_human: 'Hand-off to staff' };
+const TOOL_LABEL = { search_menu: 'Menu search', get_dish: 'Dish details', list_categories: 'Categories', get_deals: 'Deals', recommend: 'Recommendations', get_store_info: 'Store info', search_knowledge: 'FAQ', get_my_orders: 'My orders', get_order_status: 'Order status', get_my_cart: 'Cart', propose_add_to_cart: 'Add to cart', check_discount_code: 'Discount check', escalate_to_human: 'Hand-off to staff', search_documents: 'Documents' };
 
 function Kpi({ icon: Icon, label, value, hint, bg, color }) {
     return (
@@ -86,7 +86,7 @@ export default function AiInsights() {
                     Array.from({ length: 6 }, (_, i) => <Skeleton key={i} variant="rounded" height={86} />)
                 ) : (
                     <>
-                        <Kpi icon={IconMessageCircle} label="Conversations" value={stats.sessions} hint={`${stats.avgMessagesPerSession} messages each`} />
+                        <Kpi icon={IconMessageCircle} label="Conversations" value={stats.sessions} hint={`${stats.avgMessagesPerSession} message${Number(stats.avgMessagesPerSession) === 1 ? '' : 's'} each`} />
                         <Kpi icon={IconUserQuestion} label="Questions" value={stats.messages} hint={`avg reply ${(stats.avgLatencyMs / 1000).toFixed(1)} s`} bg="#E7F0FD" color="#1E5BB8" />
                         <Kpi icon={IconMoodHappy} label="Helpful" value={stats.thumbsUp} hint={`${stats.thumbsDown} not helpful`} bg="#E8F6EE" color="#1E7A45" />
                         <Kpi icon={IconAlertTriangle} label="Unanswered" value={stats.unanswered} hint={`${stats.escalations} asked for a person`} bg="#FDECEC" color="#B42318" />

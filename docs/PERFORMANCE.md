@@ -45,3 +45,16 @@ Every cache is size-capped, so memory stays bounded under load.
 - **Chat under load.** It costs money per message with a real key. The rule-based path is the same code as the tools and is covered by `chat33.js` and `chat34.js`.
 - **Lighthouse page speed.** It needs a production build served by `vite preview` on the deployment target; run it after deploying.
 - **Uptime (SRS 5.2, 99.9%).** It depends on the hosting; point an uptime monitor at `GET /health`.
+
+## Document upload (RAG R1.3)
+
+| Document | Size | Passages | Embedding batches | Time (test mode) |
+|---|---|---|---|---|
+| 200-page PDF (pdfkit) | 179 KB | 400 | 7 (sent 3 at a time) | 3.0 s |
+
+**With the real OpenAI API**, each embedding batch adds about 0.5–1.5 s. Sending three at a time means a 200-page upload takes roughly **5–8 s** in total.
+
+**On Vercel:**
+- The Hobby plan's default function limit is 10 s, so very large documents are borderline there.
+- Set `maxDuration` to 60 on Pro, or split very long documents.
+- Typical guides (under 50 pages) take a couple of seconds.

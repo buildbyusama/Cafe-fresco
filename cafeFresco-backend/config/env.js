@@ -57,7 +57,7 @@ const rag = () => ({
     maxFileMb: Number(process.env.RAG_MAX_FILE_MB || (process.env.VERCEL ? 4 : 10)),
     maxDocs: Number(process.env.RAG_MAX_DOCS || 50),
     maxChars: 400000,
-    maxPassagesTotal: 20000,
+    maxPassagesTotal: Number(process.env.RAG_MAX_PASSAGES || 20000),
     chunkChars: 1200,
     overlapChars: 200,
     maxPassages: 5,

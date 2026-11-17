@@ -99,3 +99,9 @@ Tests live in `FYP/tests` (`npm i` once, then `node <file>.js`). `regression.js`
 | 6.4 | B | Load test `tests/load64.js` (500 connections): before, `/product/fetch` p97.5 1,983 ms and `/category/fetch` / `/reco/trending` timing out. Added `services/responseCache.js` (15 s in-memory cache for public catalogue GETs, `X-Cache` header; never for admins or personal routes; cleared on any admin change and any stock change; ≤500 entries). After: 6,000–10,000 req/s, p97.5 ≤ 86 ms, 0 errors on every endpoint. `LOAD_TEST=true` lets localhost skip the general rate limiter (refused in production). Results in `docs/PERFORMANCE.md`. | `load64.js`, `cache64.js` |
 | 7.1 | B | Red-team `tests/redteam71.js`: 32 attacks (prompt/key extraction, DAN, other users' orders, admin impersonation, injection inside a dish description and an FAQ, free/paid/cancel/refund claims, add-to-cart without asking, script/markdown payloads, full-width Unicode, Urdu/Roman Urdu injection, off-topic, allergy, unknown diet, invented dish) through the AI path (mock) and the live server, plus targeted checks. Fix: `search_menu` flags `closestOnly` so answers say "I couldn't find exactly that" for dishes not on the menu. Real-model run pending the key. | `redteam71.js` |
 | 7.2 | — | Docs: README AI section (switch-off, re-index, FAQ seeding, store facts, costs, endpoints), Images and Monitoring sections; SHARED_DECISIONS links the AI decisions; `.env.example` complete. | all suites |
+
+## RAG plan (docs/RAG_PLAN.md)
+
+| Step | Projects | Notes | Test |
+|---|---|---|---|
+| R0.1 | B | pdf-parse 2.4.5 (current pdf.js), mammoth 1.13.0, yauzl 3.4.0 (tests: pdfkit, docx). `config/env.js` `rag()` limits (4 MB on Vercel, `INGEST_MODE` validated, background refused on Vercel). `embed(texts, { dimensions })` (+ mock). Tool registry: per-tool `maxOutput`, `passages` shrink. Activity log maps `/documents`. README + `.env.example`. | `rag01.js` |

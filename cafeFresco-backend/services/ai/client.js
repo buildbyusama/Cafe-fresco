@@ -130,14 +130,14 @@ async function chat({ messages, tools, maxTokens = 500, onDelta, signal, tempera
 }
 
 // Embeddings for an array of texts → array of vectors (same order)
-async function embed(texts) {
+async function embed(texts, { dimensions } = {}) {
     if (!texts.length) return [];
     await assertAvailable();
     if (ai().mock) {
         await record({ embedCalls: 1 });
-        return texts.map(mock.embed);
+        return texts.map((t) => mock.embed(t, dimensions));
     }
-    const res = await withRetry((abortSignal) => openai().embeddings.create({ model: ai().embedModel, input: texts }, { signal: abortSignal }));
+    const res = await withRetry((abortSignal) => openai().embeddings.create({ model: ai().embedModel, input: texts, ...(dimensions ? { dimensions } : {}) }, { signal: abortSignal }));
     await record({ tokensIn: res.usage?.prompt_tokens || 0, embedCalls: 1 });
     return res.data.sort((a, b) => a.index - b.index).map((d) => d.embedding);
 }

@@ -21,6 +21,9 @@ function validateEnv() {
     if (env.COOKIE_SECRET && env.COOKIE_SECRET.length < 32) errors.push('COOKIE_SECRET must be at least 32 characters');
     if (env.NODE_ENV === 'production' && env.AI_MOCK === 'true') errors.push('AI_MOCK must not be true in production');
     if (env.NODE_ENV === 'production' && env.LOAD_TEST === 'true') errors.push('LOAD_TEST must not be true in production');
+    if (env.VERCEL && Number(env.RAG_MAX_FILE_MB) > 4) warnings.push('RAG_MAX_FILE_MB is above 4: Vercel rejects request bodies over 4.5 MB, so bigger document uploads will fail');
+    if (env.INGEST_MODE && !['sync', 'background'].includes(env.INGEST_MODE)) errors.push("INGEST_MODE must be 'sync' or 'background'");
+    if (env.VERCEL && env.INGEST_MODE === 'background') errors.push('INGEST_MODE=background does not work on Vercel (work after the response is frozen)');
 
     warnings.forEach((w) => console.warn(`⚠️  ${w}`));
     if (errors.length) {
@@ -49,4 +52,22 @@ const ai = () => ({
 // Falls back to a key derived from SECRET_KEY so local setups work without a new variable
 const cookieSecret = () => process.env.COOKIE_SECRET || require('crypto').createHash('sha256').update('cf_anon:' + (process.env.SECRET_KEY || '')).digest('hex');
 
-module.exports = { validateEnv, corsOrigins, ai, cookieSecret };
+// Document knowledge (RAG) limits — docs/RAG_PLAN.md
+const rag = () => ({
+    maxFileMb: Number(process.env.RAG_MAX_FILE_MB || (process.env.VERCEL ? 4 : 10)),
+    maxDocs: Number(process.env.RAG_MAX_DOCS || 50),
+    maxChars: 400000,
+    maxPassagesTotal: 20000,
+    chunkChars: 1200,
+    overlapChars: 200,
+    maxPassages: 5,
+    perDoc: 2,
+    contextChars: 3500,
+    // similarity cut-off; calibrated for the real model in step R2.2 (mock vectors use their own scale)
+    minScore: Number(process.env.RAG_MIN_SCORE || (process.env.AI_MOCK === 'true' ? 0.3 : 0.35)),
+    dims: 512,
+    ingestMode: process.env.INGEST_MODE || 'sync',
+    budgetShare: 0.5,
+});
+
+module.exports = { validateEnv, corsOrigins, ai, cookieSecret, rag };

@@ -8,11 +8,11 @@ const words = (t) => String(t || '').toLowerCase().normalize('NFKD').replace(/[^
 const stem = (w) => w.replace(/(ies)$/, 'y').replace(/(es|s)$/, '');
 
 // Deterministic bag-of-words vector: cosine ≈ word overlap
-function embed(text) {
-    const v = new Array(DIM).fill(0);
+function embed(text, dims = DIM) {
+    const v = new Array(dims).fill(0);
     for (const w of words(text)) {
         const h = crypto.createHash('md5').update(stem(w)).digest();
-        v[h.readUInt16BE(0) % DIM] += 1;
+        v[h.readUInt16BE(0) % dims] += 1;
     }
     const n = Math.hypot(...v) || 1;
     return v.map((x) => x / n);

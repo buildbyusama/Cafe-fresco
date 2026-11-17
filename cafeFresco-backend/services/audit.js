@@ -9,7 +9,7 @@ const SECRET = /pass|token|secret|key|card|cvc|cvv/i;
 const ENTITY = [
     [/^\/product\/inventory/, 'inventory'], [/^\/product/, 'product'], [/^\/category/, 'category'], [/^\/order/, 'order'],
     [/^\/discount/, 'discount'], [/^\/admin\/(create|update|delete)-permission/, 'permission'], [/^\/settings/, 'settings'],
-    [/^\/knowledge/, 'knowledge'], [/^\/employee/, 'employee'], [/^\/department/, 'department'], [/^\/supplier/, 'supplier'],
+    [/^\/documents/, 'document'], [/^\/knowledge/, 'knowledge'], [/^\/employee/, 'employee'], [/^\/department/, 'department'], [/^\/supplier/, 'supplier'],
     [/^\/distributer/, 'distributor'], [/^\/chat\/admin/, 'assistant'], [/^\/admin\/mark-seen/, null], [/^\/admin\/(login|logout|forgot|reset)/, null],
 ];
 
@@ -45,7 +45,7 @@ function auditTrail(req, res, next) {
         const path = req.originalUrl.split('?')[0];
         const entity = entityOf(path);
         if (!entity) return; // sign-in, reading notifications: not changes
-        const action = req.method === 'DELETE' || /\/delete/.test(path) ? 'delete' : /\/(add|create|register)\b/.test(path) || (req.method === 'POST' && !/update|mark|reindex|test/.test(path)) ? 'create' : 'update';
+        const action = req.method === 'DELETE' || /\/delete/.test(path) ? 'delete' : /\/(add|create|register)\b/.test(path) || (req.method === 'POST' && !/update|mark|reindex|replace|test/.test(path)) ? 'create' : 'update';
         const entityId = req.params?.id || path.match(/[0-9a-f]{24}/)?.[0] || req.body?.orderId || res.locals.auditId || req.body?.email || null;
         AuditLog.create({
             adminId: req.admin.userId,

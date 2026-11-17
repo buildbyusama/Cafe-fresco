@@ -3,7 +3,7 @@
 const tools = [...require('./menu'), ...require('./store'), ...require('./account'), ...require('./escalate')];
 const byName = new Map(tools.map((t) => [t.name, t]));
 
-const MAX_OUTPUT = 1500; // characters of JSON the model sees per tool call
+const MAX_OUTPUT = 1500; // default characters of JSON the model sees per tool call (a tool may set maxOutput)
 const FORBIDDEN = /^(email|phone|password|resetPasswordToken|passwordChangedAt|userId|anonId|__v|stack|embedding|embeddingHash|idempotencyKey|stripePaymentIntentId|shippingAddress)$/;
 
 // OpenAI tool definitions
@@ -58,17 +58,17 @@ function sanitize(value) {
 }
 
 // Shrink lists until the JSON fits MAX_OUTPUT
-function fit(data) {
+function fit(data, max = MAX_OUTPUT) {
     let json = JSON.stringify(data);
     const copy = JSON.parse(json);
-    for (const key of ['items', 'orders', 'lines', 'categories', 'entries']) {
-        while (json.length > MAX_OUTPUT && Array.isArray(copy[key]) && copy[key].length > 1) {
+    for (const key of ['items', 'orders', 'lines', 'categories', 'entries', 'passages']) {
+        while (json.length > max && Array.isArray(copy[key]) && copy[key].length > 1) {
             copy[key].pop();
             copy.truncated = true;
             json = JSON.stringify(copy);
         }
     }
-    return json.length > MAX_OUTPUT ? JSON.stringify({ ...copy, note: 'Result shortened' }).slice(0, MAX_OUTPUT) : json;
+    return json.length > max ? JSON.stringify({ ...copy, note: 'Result shortened' }).slice(0, max) : json;
 }
 
 /**
@@ -88,7 +88,7 @@ async function run(name, rawArgs, ctx) {
     if (problem) return { name, args, content: JSON.stringify({ error: 'bad_arguments', message: problem }), cards: [], error: 'bad_arguments' };
     try {
         const { data, cards = [] } = await tool.handler(args, ctx);
-        return { name, args, content: fit(sanitize(data)), cards, data: sanitize(data) };
+        return { name, args, content: fit(sanitize(data), tool.maxOutput || MAX_OUTPUT), cards, data: sanitize(data) };
     } catch (err) {
         console.error(`Tool ${name} failed:`, err);
         return { name, args, content: JSON.stringify({ error: 'tool_failed', message: 'That lookup failed. Apologise and suggest trying again.' }), cards: [], error: 'tool_failed' };

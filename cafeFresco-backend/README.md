@@ -362,3 +362,12 @@ Uploads go through `services/storage.js`: local `/public/images` by default, Clo
 - Logs are JSON lines (pino) with a `reqId` on every line; errors are `"level":50`.
 - The dashboard bell raises: AI outages / budget used up, payment problems, more than 10 server errors in a minute, and crash-level errors (each de-duplicated).
 - Dashboard → Activity Log (admin) lists every change made in the dashboard for a year.
+
+## Documents (RAG)
+
+Admins and managers upload PDF, Word (.docx), .txt or .md files in Dashboard → AI Assistant → Documents; the assistant answers from **published** ones and names the document it used. Plan: `docs/RAG_PLAN.md`.
+
+- Limits: 10 MB per file (4 MB on Vercel, which rejects bigger request bodies), 50 documents, about 200 pages per document. Scanned (image-only) and password-protected PDFs are refused.
+- Only the extracted text is kept, not the original file.
+- Prices, stock, hours and order status always come from the database, even if a document says otherwise.
+- **Anything in a published document can be read by customers through the chat.** Don't upload supplier prices, staff details, contracts or personal data. Uploads are scanned for emails, phone numbers and card/CNIC-like numbers, and publishing asks you to confirm.

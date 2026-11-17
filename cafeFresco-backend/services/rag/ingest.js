@@ -69,7 +69,7 @@ async function ingest(docId, buffer, originalName) {
         // a delete or a newer "Replace file" may have happened meanwhile: never resurrect or mix versions
         const now = await Document.findOneAndUpdate(
             { _id: doc._id, version, status: 'processing' },
-            { $set: { status: 'ready', error: null, mime, pages, chars: text.length, chunkCount: parts.length, privacyFlags, ...(keywordOnly ? { error: 'Searchable by keywords only until an OpenAI key is set (then Re-index).' } : {}) } },
+            { $set: { status: 'ready', servingVersion: version, error: null, mime, pages, chars: text.length, chunkCount: parts.length, privacyFlags, ...(keywordOnly ? { error: 'Searchable by keywords only until an OpenAI key is set (then Re-index).' } : {}) } },
             { new: true }
         );
         if (!now) {
@@ -90,8 +90,11 @@ async function ingest(docId, buffer, originalName) {
             // a replace that fails keeps the previous version serving; a first upload just fails
             const doc = await Document.findById(docId);
             if (doc && doc.version === version && doc.status !== 'deleting') {
-                const hasOld = await DocChunk.exists({ documentId: docId, version: { $lt: version } });
-                await Document.updateOne({ _id: docId, version }, hasOld ? { $set: { status: 'ready', version: version - 1, error: `The new file couldn't be used: ${reason}` } } : { $set: { status: 'failed', error: reason } });
+                // the previous version (servingVersion) keeps answering questions until a new file works
+                await Document.updateOne(
+                    { _id: docId, version },
+                    doc.servingVersion > 0 ? { $set: { status: 'ready', version: doc.servingVersion, error: `The new file couldn't be used: ${reason}` } } : { $set: { status: 'failed', error: reason } }
+                );
                 changed();
             }
         }
@@ -104,8 +107,8 @@ async function ingest(docId, buffer, originalName) {
 // Re-embed from the stored passage text (the original file isn't kept). Only changed passages cost tokens.
 async function reindex(docId) {
     const doc = await Document.findById(docId);
-    if (!doc || doc.status !== 'ready') return { embedded: 0, skipped: 0 };
-    const chunks = await DocChunk.find({ documentId: doc._id, version: doc.version }).select('+embeddingHash text heading').lean();
+    if (!doc || doc.status !== 'ready' || !doc.servingVersion) return { embedded: 0, skipped: 0 };
+    const chunks = await DocChunk.find({ documentId: doc._id, version: doc.servingVersion }).select('+embeddingHash text heading').lean();
     const r = await embedChunks(chunks);
     if (!r.keywordOnly) await Document.updateOne({ _id: doc._id }, { $set: { error: null } });
     changed();

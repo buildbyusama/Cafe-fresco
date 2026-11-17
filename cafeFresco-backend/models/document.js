@@ -20,6 +20,7 @@ const documentSchema = new mongoose.Schema(
         privacyFlags: { type: [{ _id: false, type: { type: String }, count: Number }], default: [] },
         processingStartedAt: { type: Date, default: Date.now },
         version: { type: Number, default: 1 }, // bumped by "Replace file"; passages carry the version they belong to
+        servingVersion: { type: Number, default: 0 }, // the last version that finished processing: what search uses (0 = none yet)
         uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'admin' },
         updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'admin' },
     },

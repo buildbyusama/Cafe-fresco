@@ -121,6 +121,7 @@ app.use('/chat/admin', require('./routes/chatAdmin'));
 app.use('/chat', require('./routes/chat'));
 app.use('/knowledge', require('./routes/knowledge'));
 app.use('/audit', require('./routes/audit'));
+app.use('/documents', require('./routes/documents'));
 
 // Unknown routes → JSON 404 (never an HTML page)
 app.use((req, res) => {

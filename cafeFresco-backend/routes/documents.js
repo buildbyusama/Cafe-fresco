@@ -92,9 +92,10 @@ router.post('/:id/replace', ...managers, uploadLimiter, receiveFile, async (req,
         const hash = sha(req.file.buffer);
         const dup = await duplicateOf(hash, req.params.id);
         if (dup) return res.status(409).json({ message: `This file is already uploaded as "${dup.title}".` });
-        const doc = await Document.findOneAndUpdate(
+        const current = await Document.findOne({ _id: req.params.id, status: { $in: ['ready', 'failed'] } }).select('sha256').lean();
+        const doc = current && await Document.findOneAndUpdate(
             { _id: req.params.id, status: { $in: ['ready', 'failed'] } },
-            { $inc: { version: 1 }, $set: { status: 'processing', processingStartedAt: new Date(), sha256: hash, fileName: req.file.originalname, sizeBytes: req.file.size, error: null, updatedBy: req.admin.userId } },
+            { $inc: { version: 1 }, $set: { previousSha256: current.sha256, status: 'processing', processingStartedAt: new Date(), sha256: hash, fileName: req.file.originalname, sizeBytes: req.file.size, error: null, updatedBy: req.admin.userId } },
             { new: true }
         );
         if (!doc) return res.status(409).json({ message: 'This document is still processing or no longer exists.' });

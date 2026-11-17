@@ -69,7 +69,7 @@ async function ingest(docId, buffer, originalName) {
         // a delete or a newer "Replace file" may have happened meanwhile: never resurrect or mix versions
         const now = await Document.findOneAndUpdate(
             { _id: doc._id, version, status: 'processing' },
-            { $set: { status: 'ready', servingVersion: version, error: null, mime, pages, chars: text.length, chunkCount: parts.length, privacyFlags, ...(keywordOnly ? { error: 'Searchable by keywords only until an OpenAI key is set (then Re-index).' } : {}) } },
+            { $set: { status: 'ready', servingVersion: version, previousSha256: null, error: null, mime, pages, chars: text.length, chunkCount: parts.length, privacyFlags, ...(keywordOnly ? { error: 'Searchable by keywords only until an OpenAI key is set (then Re-index).' } : {}) } },
             { new: true }
         );
         if (!now) {
@@ -91,10 +91,12 @@ async function ingest(docId, buffer, originalName) {
             const doc = await Document.findById(docId);
             if (doc && doc.version === version && doc.status !== 'deleting') {
                 // the previous version (servingVersion) keeps answering questions until a new file works
-                await Document.updateOne(
+                const back = (withSha) => Document.updateOne(
                     { _id: docId, version },
-                    doc.servingVersion > 0 ? { $set: { status: 'ready', version: doc.servingVersion, error: `The new file couldn't be used: ${reason}` } } : { $set: { status: 'failed', error: reason } }
+                    doc.servingVersion > 0 ? { $set: { status: 'ready', version: doc.servingVersion, ...(withSha && doc.previousSha256 ? { sha256: doc.previousSha256 } : {}), previousSha256: null, error: `The new file couldn't be used: ${reason}` } } : { $set: { status: 'failed', error: reason } }
                 );
+                // the old fingerprint goes back, unless that file was uploaded again meanwhile as another document
+                await back(true).catch((e) => (e?.code === 11000 ? back(false) : Promise.reject(e)));
                 changed();
             }
         }

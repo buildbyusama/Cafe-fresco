@@ -32,7 +32,8 @@ const PARA = (s) => `Cafe Fresco catering ${s}: weddings and office events need 
         const p = await login(mgr);
         await p.goto(`${URL.DASH}/admin/ai-documents`);
         await p.getByText('Upload a document').waitFor({ timeout: 15000 });
-        check('manager sees the page with the library usage', /of 50 documents/.test(await p.locator('body').innerText()));
+        const usage = await p.getByText(/of 50 documents/).first().waitFor({ timeout: 10000 }).then(() => true, () => false);
+        check('manager sees the page with the library usage', usage);
 
         // upload (double click → one request)
         let posts = 0;

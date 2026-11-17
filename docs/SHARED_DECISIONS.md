@@ -39,6 +39,8 @@ every endpoint you change and update them in the same step so both frontends kee
 
 ## Decisions
 
+> AI assistant, recommendations and smart search follow the binding **AI decisions A1–A12** in [AI_MASTER_PLAN.md](AI_MASTER_PLAN.md#ai-decisions-binding-for-every-step) (grounding, identity, confirm-to-act, untrusted text, cost limits, fallback, mock mode, privacy).
+
 ### D1. Money formula (both frontends display it, only the backend stores it)
 ```
 unitPrice    = round2(price × (1 − discount/100))

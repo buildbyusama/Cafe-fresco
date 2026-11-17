@@ -345,6 +345,16 @@ The chat assistant and smart search use OpenAI through `services/ai/client.js` (
 - Cost guard: `AI_DAILY_TOKEN_BUDGET` (default 2,000,000 tokens a day). Above it the assistant switches to rule-based answers until midnight (`APP_TZ`). Also set a monthly limit in your OpenAI account.
 - `AI_MOCK=true` gives scripted offline answers, used by the tests (`FYP/tests`). Never enable it in production; the server refuses to start if you do.
 - Every call has a timeout (`AI_TIMEOUT_MS`, default 20 s) and one retry on 429/5xx.
+- **Turn the assistant off** without a deploy: Dashboard → AI Assistant → Assistant settings (or `CHAT_ENABLED=false`). A lower daily budget can be set there too (never above `AI_DAILY_TOKEN_BUDGET`).
+- **After adding the key**, run `node scripts/embedProducts.js` once (or Assistant settings → Re-index) so smart search and "similar dishes" use embeddings. Until then they use keyword matching.
+- **Knowledge (FAQ):** `node scripts/seedKnowledge.js` adds 8 common questions as drafts; write the real answers and publish them in Dashboard → AI Assistant → Knowledge.
+- **Store facts** the assistant quotes (hours, contact, delivery, policies) come from Dashboard → Store Info. Empty facts are never invented: the assistant says it doesn't know.
+- **Costs:** Dashboard → AI Assistant → Insights shows tokens and estimated cost (`OPENAI_PRICE_IN` / `OPENAI_PRICE_OUT`, USD per 1M tokens). Tests run with `AI_MOCK=true` and are counted separately (never in the real budget).
+- **Endpoints:** `/chat/*` (customer chat, SSE), `/chat/admin/*` (insights, transcripts, usage, re-index), `/knowledge`, `/reco/*`, `/product/search`, `/events`, `/settings`.
+
+## Images
+
+Uploads go through `services/storage.js`: local `/public/images` by default, Cloudinary when `CLOUDINARY_URL` is set (required on Vercel, where local files disappear). Move existing images with `node scripts/migrateImagesToCloud.js --apply` after setting it.
 
 ## Monitoring
 

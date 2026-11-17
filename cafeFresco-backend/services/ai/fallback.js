@@ -49,7 +49,8 @@ function answer(results) {
         if (data?.error) { parts.push(data.message || "I couldn't find that."); continue; }
         if (['search_menu', 'get_deals', 'recommend'].includes(name)) {
             const items = data.items || [];
-            parts.push(items.length ? `Here's what I found:\n${items.map((i) => `- **${i.title}** — ${money(i.finalPrice)}${i.inStock ? '' : ' (out of stock)'}`).join('\n')}` : "I couldn't find a matching dish on our menu. Try another word, or browse the full menu.");
+            const lead = data.closestOnly ? "I couldn't find exactly that on our menu. The closest dishes we have:" : "Here's what I found:";
+            parts.push(items.length ? `${lead}\n${items.map((i) => `- **${i.title}** — ${money(i.finalPrice)}${i.inStock ? '' : ' (out of stock)'}`).join('\n')}` : "I couldn't find a matching dish on our menu. Try another word, or browse the full menu.");
         } else if (name === 'get_dish') {
             parts.push(`**${data.title}** — ${money(data.finalPrice)}. ${data.description || ''}`.trim());
         } else if (name === 'list_categories') {

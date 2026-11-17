@@ -52,7 +52,7 @@ async function resolveCategory(name) {
 module.exports = [
     {
         name: 'search_menu',
-        description: 'Find dishes on the Cafe Fresco menu by meaning, name, category, price range, tags or diet. Use for any question about what we serve, prices, or "something like…".',
+        description: 'Find dishes on the Cafe Fresco menu by meaning, name, category, price range, tags or diet. Use for any question about what we serve, prices, or "something like…". If the result has closestOnly, tell the customer that exact dish is not on the menu before suggesting these.',
         parameters: {
             type: 'object',
             additionalProperties: false,
@@ -73,7 +73,13 @@ module.exports = [
             // in-stock first, keep the search order otherwise
             const stock = await stockOf(products.map((p) => p._id));
             products.sort((a, b) => ((stock.get(String(b._id)) ?? 0) > 0) - ((stock.get(String(a._id)) ?? 0) > 0));
-            return present(products, args.limit || 4);
+            const out = await present(products, args.limit || 4);
+            // "golden caviar pizza" → we have pizzas but not that one: say so instead of implying a match
+            const words = String(args.query || '').toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 4 && !['with', 'something', 'some', 'have', 'want', 'like', 'dish', 'dishes', 'food'].includes(w));
+            const shown = products.slice(0, args.limit || 4);
+            const hay = (p) => `${p.title} ${(p.tags || []).join(' ')} ${p.category?.title || ''}`.toLowerCase();
+            if (words.length && shown.length && !shown.some((p) => words.every((w) => hay(p).includes(w.replace(/s$/, ''))))) out.data.closestOnly = true;
+            return out;
         },
     },
     {

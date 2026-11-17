@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 
 // An uploaded document the assistant can answer from (docs/RAG_PLAN.md). Only the extracted text is kept,
 // split into passages (docChunk). Customers only ever see passages of published, ready documents.
-const cleanTitle = (v) => String(v ?? '').replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
+// HTML tags (and whole script/style blocks) are removed, not just their angle brackets
+const stripTags = (v) => String(v ?? '').replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ').replace(/<\/?[a-z!][^>]*>/gi, ' ');
+const cleanTitle = (v) => stripTags(v).replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
 
 const documentSchema = new mongoose.Schema(
     {
@@ -31,3 +33,4 @@ documentSchema.index({ isPublished: 1, status: 1 });
 
 module.exports = mongoose.model('document', documentSchema);
 module.exports.cleanTitle = cleanTitle;
+module.exports.stripTags = stripTags;

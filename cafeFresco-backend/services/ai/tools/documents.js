@@ -1,19 +1,24 @@
 // search_documents: passages from the shop's published documents (docs/RAG_PLAN.md R3.1).
 // Document text is untrusted data (R4) and never a source of live facts like prices (R1).
 const { retrieve } = require('../../rag/retrieve');
-const { cleanTitle } = require('../../../models/document');
+const { cleanTitle, stripTags } = require('../../../models/document');
 
 // R1: a document's prices are never quoted (an old menu PDF must not beat the database)
 const PRICE = /(?:\$|rs\.?|pkr|usd)\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s?(?:rs\b|rupees|pkr|dollars?|usd)/gi;
 // R4: sentences that try to instruct the assistant are dropped (they are data, never commands)
-const INJECTION = /ignore (all |any |the )?(previous|above|prior|earlier|your)|system prompt|you are now|developer mode|new instructions|disregard (all|the|your)|reveal (your|the) (prompt|instructions|key)|^\s*(system|assistant)\s*:/i;
+const INJECTION = /ignore (all |any |the )?(previous|above|prior|earlier|your)|system prompt|you are now|developer mode|new instructions|disregard (all|the|your)|reveal (your|the) (prompt|instructions|key)|^\s*(system|assistant)\s*:|ہدایات|نظر ?انداز|hidayat|pichli (baat|hidayat)|bhool jao/i;
+// offers and contact details are live facts too: get_deals / get_store_info own them, never a document
+const OFFER = /\b\d{1,3}\s?%\s?(off|discount)|\b(all|every|your) orders? (are|is) free|free (food|orders?|meals?) for (all|everyone)|\bdiscount code\s+\S+/gi;
+const PHONE = /\+?\d[\d\s-]{8,}\d/g;
 
 function cleanPassage(text) {
-    const sentences = String(text).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f<>]/g, ' ').split(/(?<=[.!?۔])\s+|\n+/);
+    const sentences = stripTags(text).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f<>]/g, ' ').split(/(?<=[.!?۔])\s+|\n+/);
     return sentences
         .filter((s) => !INJECTION.test(s))
         .join(' ')
         .replace(PRICE, '[price: check the menu]')
+        .replace(OFFER, "[offers: check today's deals]")
+        .replace(PHONE, '[phone: see the Contact page]')
         .replace(/[ \t]+/g, ' ')
         .trim();
 }

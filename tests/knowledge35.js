@@ -1,4 +1,5 @@
 // Step 3.5: knowledge base (roles, CRUD, drafts never used, re-embedding on edit, threshold, assistant answers from it)
+const STARTERS = ['Do you have parking?', 'Is your food halal?', 'Do you do catering or bulk orders for events?', 'Can I book a table or reserve for a group?', 'Do you have a kids menu or high chairs?', 'Can I change or add to my order after placing it?', 'Do you have Wi-Fi for customers?', 'Do you offer gift cards or vouchers?'];
 process.env.AI_MOCK = 'true';
 const { request } = require('playwright');
 const { model, backend, bcrypt, URL, ADMIN, check, connect, done, tag } = require('./lib');
@@ -55,7 +56,8 @@ const { model, backend, bcrypt, URL, ADMIN, check, connect, done, tag } = requir
         const list = await (await ad.get(`/knowledge?q=${t}&status=active`)).json();
         check('list filters by text and status', list.entries.length === 1 && list.entries[0]._id === entry._id);
         check('delete → 200, then 404', (await ad.delete(`/knowledge/${entry._id}`)).status() === 200 && (await ad.delete(`/knowledge/${entry._id}`)).status() === 404);
-        check('8 starter drafts exist and are inactive', (await Knowledge.countDocuments({ answer: /^DRAFT:/, isActive: false })) === 8);
+        // the owner may have answered some starter questions since: every one exists, and the unanswered ones stay inactive
+        check('8 starter questions exist; unanswered drafts are inactive', (await Knowledge.countDocuments({ question: { $in: STARTERS } })) === 8 && !(await Knowledge.exists({ answer: /^DRAFT:/, isActive: true })));
     } finally {
         await Knowledge.deleteMany({ _id: { $in: created } });
         await Admin.deleteOne({ _id: ed._id });

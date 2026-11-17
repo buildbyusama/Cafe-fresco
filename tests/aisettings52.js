@@ -52,7 +52,9 @@ const { model, bcrypt, URL, ADMIN, check, connect, done, tag } = require('./lib'
         check('a lower budget is saved and applied', usage.budget === 50000, String(usage.budget));
         await p.getByRole('button', { name: 'Re-index menu and FAQ' }).click();
         await p.waitForTimeout(1500);
-        check('re-index without a key explains what to do', /OpenAI API key/.test(await p.locator('main').innerText()));
+        const mainText = await p.locator('main').innerText();
+        // with a key the re-index runs; without one it explains what to do
+        check(process.env.OPENAI_API_KEY ? 're-index with a key reports the result' : 're-index without a key explains what to do', process.env.OPENAI_API_KEY ? /re-?index|updated|unchanged/i.test(mainText) : /OpenAI API key/.test(mainText), mainText.slice(0, 160));
         // switch the assistant off → the shop button disappears
         await p.getByRole('checkbox', { name: /Show the assistant/ }).uncheck();
         await p.getByRole('button', { name: 'Save' }).click();

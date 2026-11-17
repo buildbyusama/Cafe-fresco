@@ -46,7 +46,7 @@ const { model, URL, ADMIN, check, connect, done, tag } = require('./lib');
         const login = p.locator('.cc-login').last();
         check('guest "track my order" → Log in button back to this page', (await login.count()) === 1 && (await login.getAttribute('href')) === '/login?next=%2F');
         await send(p, `do you host karaoke nights ${t}`);
-        check('HTML in an answer is shown as text, never run', (await p.evaluate(() => window.__xss)) === undefined && (await p.locator('.cc-bubble img, .cc-bubble script').count()) === 0 && /Karaoke/.test(await p.locator('.cc-msg.is-bot').last().innerText()));
+        check('HTML in an answer is shown as text, never run', (await p.evaluate(() => window.__xss)) === undefined && (await p.locator('.cc-bubble img, .cc-bubble script').count()) === 0 && /karaoke/i.test(await p.locator('.cc-msg.is-bot').last().innerText()), (await p.locator('.cc-msg.is-bot').last().innerText()).slice(0, 200));
 
         // history survives a reload
         const before = await p.locator('.cc-msg.is-user').count();

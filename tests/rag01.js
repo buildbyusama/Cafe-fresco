@@ -32,7 +32,7 @@ const { backend, check, done, connect } = require('./lib');
     check('embed with dimensions → 512 numbers; default unchanged', v512.length === 512 && vDefault.length === 256);
 
     const tools = backend('services/ai/tools');
-    check('tool registry still 13 tools, default cap 1500', tools.names().length === 13 && tools.MAX_OUTPUT === 1500);
+    check('tool registry has 14 tools (search_documents added in R3.1), default cap 1500', tools.names().length === 14 && tools.MAX_OUTPUT === 1500);
 
     const { entityOf } = backend('services/audit');
     check('activity log maps /documents', entityOf('/documents') === 'document' && entityOf('/documents/abc/reindex') === 'document');

@@ -70,7 +70,10 @@ const events = (body) => body.split('\n\n').filter((b) => b.startsWith('event:')
             else sessions.push(events(await s.text()).find((e) => e.event === 'session')?.data.sessionId);
         }
         check('guest rate limit: the 11th message in 5 min → 429', hit === 11, `hit at ${hit}`);
-        check('admin cookie is not a customer identity for chat (treated as guest)', (await say(ad, 'track my order')).body.includes('log in'));
+        // the identity check is the tool result (login_required), not the model's wording
+        // the reply streams token by token: join the tokens before reading it
+        const adminTrack = (await say(ad, 'track my order')).ev.filter((e) => e.event === 'token').map((e) => e.data.text).join('');
+        check('admin cookie is not a customer identity for chat (treated as guest)', /log ?in/i.test(adminTrack), adminTrack.slice(0, 200));
     } finally {
         const u = await User.findOne({ email: `capi${t}@x.com` });
         const own = u ? await ChatSession.find({ userId: u._id }).select('_id').lean() : [];

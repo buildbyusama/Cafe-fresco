@@ -5,6 +5,8 @@ const { model, backend, URL, ADMIN, check, connect, done, tag, mongoose } = requ
     await connect();
     const [Notify, ChatSession, ChatMessage, Order, User] = ['notification', 'chatSession', 'chatMessage', 'order', 'user'].map(model);
     const t = tag();
+    // the budget alert is once per day: clear today's so the check works on a re-run
+    await Notify.deleteMany({ key: `budget:${new Date().toISOString().slice(0, 10)}` });
     const since = new Date();
     const { alert, aiProblem } = backend('services/alerts');
     const created = () => Notify.find({ time: { $gte: since } }).lean();

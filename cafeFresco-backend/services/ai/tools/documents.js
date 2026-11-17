@@ -23,19 +23,28 @@ function cleanPassage(text) {
         .trim();
 }
 
+// nothing in the documents: the staff FAQ may still answer it (the model doesn't always call search_knowledge too).
+// "faq" comes first so the stored summary isn't counted as a document gap in Insights.
+async function noDocument(query, ctx) {
+    const faq = await require('./store').find((t) => t.name === 'search_knowledge').handler({ query }, ctx).catch(() => null);
+    const entries = faq?.data?.entries || [];
+    if (entries.length) return { data: { faq: entries, passages: [], note: 'No document covers this, but the shop FAQ does: answer with the FAQ entry.' } };
+    return { data: { passages: [], note: "No document covers this. Say you don't know and suggest the Contact page." } };
+}
+
 module.exports = [
     {
         name: 'search_documents',
         description: "The shop's own documents (catering and event guides, policies, services, FAQs written as documents). Use for questions the menu and store tools don't cover. Never use for prices, deals, stock, hours or order status.",
         parameters: { type: 'object', additionalProperties: false, required: ['query'], properties: { query: { type: 'string', maxLength: 300 } } },
         maxOutput: 4000,
-        async handler({ query }) {
+        async handler({ query }, ctx) {
             const { passages } = await retrieve(query);
-            if (!passages.length) return { data: { passages: [], note: "No document covers this. Say you don't know and suggest the Contact page." } };
+            if (!passages.length) return noDocument(query, ctx);
             const out = passages
                 .map((p) => ({ source: cleanTitle(p.source), section: cleanTitle(p.heading), text: cleanPassage(p.text) }))
                 .filter((p) => p.text.length > 20);
-            if (!out.length) return { data: { passages: [], note: "No document covers this. Say you don't know and suggest the Contact page." } };
+            if (!out.length) return noDocument(query, ctx);
             const seen = new Set();
             const cards = out
                 .filter((p) => (seen.has(`${p.source}|${p.section}`) ? false : seen.add(`${p.source}|${p.section}`)))

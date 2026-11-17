@@ -19,6 +19,8 @@ async function cached(key, fn) {
     const hit = cache.get(key);
     if (hit && Date.now() - hit.at < TTL) return hit.value;
     const value = await fn();
+    // "no history yet" is not cached: the person's first views must show up on the next visit
+    if (value?.personal === false && key.startsWith('user:')) return value;
     cache.set(key, { value, at: Date.now() });
     if (cache.size > 2000) cache.delete(cache.keys().next().value);
     return value;

@@ -76,3 +76,16 @@ Every cache is size-capped, so memory stays bounded under load.
 - Vectors are held in one Float32Array: 39 MB.
 - The whole search cache, with text and keywords, takes about 60 MB.
 - One search takes 62 ms at p50 and 74 ms at p95, under the 100 ms target.
+
+## Sign-off numbers (RAG R5.2)
+
+Measured by `tests/rag52.js` (local, Atlas database) and `tests/rag22.js`.
+
+| Check | Target | Result |
+|---|---|---|
+| Retrieval p95 at 20,000 passages | under 100 ms | 54–78 ms |
+| Chat p95 added by a published 200-page library (mock AI) | under 300 ms | about +1 ms (30 → 32 ms) |
+| 200-page sync ingest (389k characters, 400 passages), mock embeddings | — | 0.7 s |
+| 200-page sync ingest, real `text-embedding-3-small` | fits Vercel's limit (10 s Hobby, 60 s Pro) | 3.7 s |
+
+A file over about 400,000 characters (about 200 pages) is refused with "split it into smaller files", so no single upload can run past these numbers by much.

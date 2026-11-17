@@ -371,3 +371,6 @@ Admins and managers upload PDF, Word (.docx), .txt or .md files in Dashboard →
 - Only the extracted text is kept, not the original file.
 - Prices, stock, hours and order status always come from the database, even if a document says otherwise.
 - **Anything in a published document can be read by customers through the chat.** Don't upload supplier prices, staff details, contracts or personal data. Uploads are scanned for emails, phone numbers and card/CNIC-like numbers, and publishing asks you to confirm.
+- Phone numbers, offers, discount codes and HTML in documents are hidden from the assistant (contact details and deals come from the store tools). Sentences that try to instruct the assistant (English or Urdu) are dropped.
+- Speed: a search over 20,000 passages takes under 100 ms; a 200-page document processes in about 4 s with real embeddings. See `docs/PERFORMANCE.md`.
+- Settings: `RAG_MAX_FILE_MB`, `RAG_MAX_DOCS`, `RAG_MAX_PASSAGES`, `INGEST_MODE`, `RAG_MIN_SCORE`, `AI_PROMPT_VERSION` (see `.env.example`).

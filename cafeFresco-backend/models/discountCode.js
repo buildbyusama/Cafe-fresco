@@ -8,6 +8,8 @@ const discountCodeSchema = new mongoose.Schema({
     maxUses: { type: Number, default: 1, min: 1 },
     usedCount: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
+    // applied for the customer at checkout when it's the best code they can use (they can remove it)
+    autoApply: { type: Boolean, default: false },
     usedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }]
 });
 

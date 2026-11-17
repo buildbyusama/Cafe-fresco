@@ -41,6 +41,7 @@ function parseCode(body, { partial }) {
         if (!Number.isInteger(data.maxUses) || data.maxUses < 1) fields.maxUses = 'Max uses must be a whole number of at least 1';
     }
     if (body.isActive !== undefined) data.isActive = body.isActive === true || body.isActive === 'true';
+    if (body.autoApply !== undefined) data.autoApply = body.autoApply === true || body.autoApply === 'true';
     return Object.keys(fields).length ? { message: Object.values(fields)[0], fields } : { data };
 }
 
@@ -87,6 +88,33 @@ router.put('/update/:id', isAdmin, authorizeRoles("admin"), async (req, res) => 
     }
 });
 // Preview only: priced from the server-side cart; nothing is recorded until the order is placed
+// Best automatic code for this customer's current server cart (SRS 4.3): among active, unexpired codes marked
+// "apply automatically" that they can still use, the biggest saving wins (tie → expires soonest). Preview only;
+// the order is still re-validated on the server (D5).
+router.post('/best', isLogged, async (req, res) => {
+    try {
+        const cart = await Cart.findOne({ userId: req.user.userId });
+        if (!cart?.items?.length) return res.json({ code: null });
+        const items = normalizeItems(cart.items.map((i) => ({ productId: i.productId, quantity: i.quantity })));
+        const { subtotal } = await computeLines(items);
+        const candidates = await DiscountCode.find({ autoApply: true, isActive: { $ne: false }, expiryDate: { $gt: new Date() } }).sort({ expiryDate: 1 }).limit(50);
+        let best = null;
+        for (const c of candidates) {
+            try {
+                const { discount, discountAmount } = await validateDiscount({ code: c.code, userId: req.user.userId, subtotal });
+                if (!best || discountAmount > best.discountAmount) best = { code: discount.code, discountAmount };
+            } catch (e) {
+                if (!(e instanceof DiscountError)) throw e; // used up, already used, below minimum: skip
+            }
+        }
+        res.json(best ? { code: best.code, discountAmount: best.discountAmount, subtotal, total: round2(subtotal - best.discountAmount) } : { code: null });
+    } catch (error) {
+        if (error instanceof StockError || error instanceof PriceError) return res.json({ code: null });
+        console.error('Best discount error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 router.post('/apply', isLogged, async (req, res) => {
     try {
         const { code } = req.body; // cartTotal is ignored (D5)

@@ -15,7 +15,7 @@ const CartPage = () => {
     // The context cart (the server's response) is the only source for lines and totals
     const {
         cart, getCart, removeFromCart, updateCartItemQuantity, pendingIds, subtotal, totalPrice, discountAmount,
-        discountApplied, discountStale, appliedCode, applyDiscount, clearDiscount, loading, cartLoaded
+        discountApplied, discountStale, appliedCode, autoApplied, applyDiscount, clearDiscount, loading, cartLoaded
     } = useContext(productContext);
     const [discountCode, setDiscountCode] = useState('');
     const [applying, setApplying] = useState(false);
@@ -200,7 +200,7 @@ const CartPage = () => {
                                         />
                                     </div>
                                     {discountApplied ? (
-                                        <button type="button" className="is-remove" onClick={() => { clearDiscount(); setDiscountCode(''); }}>
+                                        <button type="button" className="is-remove" onClick={() => { clearDiscount({ byUser: true }); setDiscountCode(''); }}>
                                             Remove
                                         </button>
                                     ) : (
@@ -209,7 +209,7 @@ const CartPage = () => {
                                         </button>
                                     )}
                                 </form>
-                                {discountApplied && <div className="fk-code-ok"><i className="bi bi-check-circle-fill" /> Code {appliedCode} applied</div>}
+                                {discountApplied && <div className="fk-code-ok"><i className="bi bi-check-circle-fill" /> {autoApplied ? `We applied ${appliedCode} for you, your best available code` : `Code ${appliedCode} applied`}</div>}
 
                                 <div className="fk-rows">
                                     <div className="fk-row"><span>Subtotal ({itemCount} {itemCount === 1 ? 'item' : 'items'})</span><span>{formatMoney(subtotal)}</span></div>

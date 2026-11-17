@@ -16,7 +16,7 @@ import TableSkeleton from 'ui-component/TableSkeleton';
 import { IconDiscount2 } from '@tabler/icons-react';
 
 const PER_PAGE = 10;
-const EMPTY = { code: '', discountPercentage: '', expiryDate: '', minPurchase: '', maxUses: '', isActive: true };
+const EMPTY = { code: '', discountPercentage: '', expiryDate: '', minPurchase: '', maxUses: '', isActive: true, autoApply: false };
 
 // yyyy-mm-dd in the browser's local time (toISOString would shift the day for anyone east/west of UTC)
 const localDate = (d) => {
@@ -93,7 +93,7 @@ const AllDiscount = () => {
 
     const openEdit = (d) => {
         const expiry = localDate(d.expiryDate);
-        setFormData({ code: d.code, discountPercentage: String(d.discountPercentage), expiryDate: expiry, originalExpiry: expiry, minPurchase: String(d.minPurchase ?? ''), maxUses: String(d.maxUses), isActive: d.isActive !== false, usedCount: d.usedCount || 0 });
+        setFormData({ code: d.code, discountPercentage: String(d.discountPercentage), expiryDate: expiry, originalExpiry: expiry, minPurchase: String(d.minPurchase ?? ''), maxUses: String(d.maxUses), isActive: d.isActive !== false, autoApply: !!d.autoApply, usedCount: d.usedCount || 0 });
         setErrors({});
         setDialog({ mode: 'edit', id: d._id });
     };
@@ -108,7 +108,8 @@ const AllDiscount = () => {
                 discountPercentage: Number(formData.discountPercentage),
                 minPurchase: formData.minPurchase === '' ? 0 : Number(formData.minPurchase),
                 maxUses: Number(formData.maxUses),
-                isActive: formData.isActive
+                isActive: formData.isActive,
+                autoApply: formData.autoApply
             };
             // keep an existing (maybe already past) expiry untouched unless it was changed
             if (dialog.mode === 'add' || formData.expiryDate !== formData.originalExpiry) body.expiryDate = formData.expiryDate;
@@ -250,6 +251,13 @@ const AllDiscount = () => {
                         <Typography sx={{ fontSize: '0.75rem', color: '#8A877F' }}>Inactive codes are rejected at checkout</Typography>
                     </Box>
                     <Switch name="isActive" checked={formData.isActive} onChange={handleChange} inputProps={{ 'aria-label': 'Active' }} />
+                </Stack>
+                <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', px: 1.5, py: 1, borderRadius: '10px', bgcolor: '#FBFAF7', border: '1px solid #F0EFEB', mt: 1.5 }}>
+                    <Box>
+                        <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>Apply automatically</Typography>
+                        <Typography sx={{ fontSize: '0.75rem', color: '#8A877F' }}>Applied at checkout when it&apos;s the customer&apos;s best code (they can remove it)</Typography>
+                    </Box>
+                    <Switch name="autoApply" checked={formData.autoApply} onChange={handleChange} inputProps={{ 'aria-label': 'Apply automatically' }} />
                 </Stack>
             </FormDialog>
         </Box>

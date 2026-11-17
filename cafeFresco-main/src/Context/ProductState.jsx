@@ -182,7 +182,17 @@ const ProductState = (props) => {
         }
     };
 
-    const clearDiscount = () => {
+    // A code the shop applied for the customer (SRS 4.3). Removing it means "not this visit".
+    const session = {
+        get: (k) => { try { return sessionStorage.getItem(k); } catch { return null; } },
+        set: (k, v) => { try { if (v) sessionStorage.setItem(k, v); else sessionStorage.removeItem(k); } catch { /* storage blocked */ } },
+    };
+    const [autoApplied, setAutoAppliedState] = useState(() => session.get('cf_auto_code') === '1');
+    const setAutoApplied = (v) => { setAutoAppliedState(v); session.set('cf_auto_code', v ? '1' : ''); };
+
+    const clearDiscount = ({ byUser = false } = {}) => {
+        if (byUser && autoApplied) session.set('cf_auto_dismissed', '1');
+        setAutoApplied(false);
         setAppliedCode('');
         setDiscountPreview(null);
     };
@@ -199,9 +209,29 @@ const ProductState = (props) => {
         }
         setAppliedCode(data.code);
         setDiscountPreview({ code: data.code, subtotal: data.subtotal, discountAmount: data.discountAmount, total: data.total });
-        if (!silent) { toast.success(data.message || 'Discount applied'); playSound(); }
+        if (!silent) {
+            setAutoApplied(false); // a code the customer typed always wins
+            toast.success(data.message || 'Discount applied');
+            playSound();
+        }
         return true;
     };
+
+    // No code yet → ask the server for the best automatic one for this cart (once the cart settles)
+    const cartKey = cart.map((i) => `${i.productId}:${i.quantity}`).join(',');
+    useEffect(() => {
+        if (authStatus !== 'authenticated' || !cartLoaded || !cart.length || appliedCode || session.get('cf_auto_dismissed')) return undefined;
+        let alive = true;
+        const t = setTimeout(async () => {
+            const { ok, data } = await apiFetch('/discount/best', { method: 'POST' });
+            if (!alive || !ok || !data.code) return;
+            if (await applyDiscount(data.code, { silent: true })) {
+                setAutoApplied(true);
+                toast.success(`We applied ${data.code} for you`);
+            }
+        }, 500);
+        return () => { alive = false; clearTimeout(t); };
+    }, [authStatus, cartLoaded, cartKey, appliedCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // D5: keep the applied code and re-check it whenever the server cart changes
     // (an empty cart only clears the code once the cart has really loaded — on a refresh it starts empty)
@@ -275,7 +305,7 @@ const ProductState = (props) => {
 
 
     return (
-        <productContext.Provider value={{ user, authStatus, cartLoaded, refreshSession, logout, cart, getCart, addToCart, updateCartItemQuantity, removeFromCart, pendingIds, wishlist, wishlistLoading, wishlistCount, wishlistIds, getWishlist, addToWish, removeFromWish, categories, fetchCategories, subtotal, totalPrice, originalTotal, discountAmount, discountApplied, discountStale, appliedCode, applyDiscount, clearDiscount, shippingAddress, setShippingAddress, playSound, loading }}>
+        <productContext.Provider value={{ user, authStatus, cartLoaded, refreshSession, logout, cart, getCart, addToCart, updateCartItemQuantity, removeFromCart, pendingIds, wishlist, wishlistLoading, wishlistCount, wishlistIds, getWishlist, addToWish, removeFromWish, categories, fetchCategories, subtotal, totalPrice, originalTotal, discountAmount, discountApplied, discountStale, appliedCode, autoApplied, applyDiscount, clearDiscount, shippingAddress, setShippingAddress, playSound, loading }}>
             {props.children}
         </productContext.Provider>
     );

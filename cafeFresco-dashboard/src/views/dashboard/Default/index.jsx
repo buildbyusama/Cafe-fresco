@@ -11,6 +11,7 @@ import Button from '@mui/material/Button';
 // project imports
 import EarningCard from './EarningCard';
 import PopularCard from './PopularCard';
+import BestSellersCard from './BestSellersCard';
 import TotalOrderLineChartCard from './TotalOrderLineChartCard';
 import StatusCard from './StatusCard';
 import TotalGrowthBarChart from './TotalGrowthBarChart';
@@ -113,6 +114,9 @@ export default function Dashboard() {
           </Grid>
           <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 0.5 }}>
             <PopularCard isLoading={isLoading} />
+          </Grid>
+          <Grid size={{ xs: 12 }}>
+            <BestSellersCard />
           </Grid>
         </Grid>
       )}

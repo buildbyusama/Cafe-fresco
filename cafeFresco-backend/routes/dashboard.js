@@ -123,4 +123,46 @@ router.get("/order-trend", ...viewers, async (req, res) => {
 });
 
 
+// Best sellers: top 8 dishes by quantity in completed orders (7d / 30d / this year, shop timezone).
+// Grouped by productId so a renamed dish stays one row; deleted dishes keep the title stored on the order.
+router.get('/popular', ...viewers, async (req, res) => {
+    try {
+        const range = ['7d', '30d', 'year'].includes(req.query.range) ? req.query.range : '30d';
+        const at = now();
+        const since = range === 'year' ? at.clone().startOf('year') : at.clone().subtract(range === '7d' ? 6 : 29, 'days').startOf('day');
+        const rows = await Order.aggregate([
+            { $match: { orderStatus: 'completed', createdAt: { $gte: since.toDate(), $lt: at.clone().endOf('day').toDate() } } },
+            { $unwind: '$products' },
+            { $sort: { createdAt: -1 } },
+            {
+                $group: {
+                    _id: '$products.productId',
+                    quantity: { $sum: '$products.quantity' },
+                    revenue: { $sum: { $ifNull: ['$products.lineTotal', { $multiply: ['$products.unitPrice', '$products.quantity'] }] } },
+                    orders: { $sum: 1 },
+                    lastTitle: { $first: '$products.title' },
+                },
+            },
+            { $sort: { quantity: -1, revenue: -1, _id: 1 } },
+            { $limit: 8 },
+            { $lookup: { from: 'products', localField: '_id', foreignField: '_id', as: 'product' } },
+        ]);
+        res.json({
+            range,
+            items: rows.map((r) => ({
+                productId: r._id,
+                title: r.product[0]?.title || r.lastTitle || 'Removed dish',
+                image: r.product[0]?.image || '',
+                quantity: r.quantity,
+                orders: r.orders,
+                revenue: Math.round((r.revenue || 0) * 100) / 100,
+                stillOnMenu: !!r.product[0] && r.product[0].isActive !== false,
+            })),
+        });
+    } catch (error) {
+        console.error('Error fetching popular items:', error);
+        res.status(500).json({ message: 'Error fetching popular items' });
+    }
+});
+
 module.exports = router;

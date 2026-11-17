@@ -374,3 +374,4 @@ Admins and managers upload PDF, Word (.docx), .txt or .md files in Dashboard →
 - Phone numbers, offers, discount codes and HTML in documents are hidden from the assistant (contact details and deals come from the store tools). Sentences that try to instruct the assistant (English or Urdu) are dropped.
 - Speed: a search over 20,000 passages takes under 100 ms; a 200-page document processes in about 4 s with real embeddings. See `docs/PERFORMANCE.md`.
 - Settings: `RAG_MAX_FILE_MB`, `RAG_MAX_DOCS`, `RAG_MAX_PASSAGES`, `INGEST_MODE`, `RAG_MIN_SCORE`, `AI_PROMPT_VERSION` (see `.env.example`).
+- Sample documents (catering guide, house policies, delivery guide, food safety, customer FAQ) are in `samples/documents/`. Load them with `node scripts/seedDocuments.js` (drafts) or `node scripts/seedDocuments.js --publish`. Edit them to match your real policies before publishing. They hold no prices, hours or contact details, because those come from the database.

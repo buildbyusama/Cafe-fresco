@@ -18,7 +18,7 @@
 .fh,
 .cf-nav,
 .cf-footer {
-    font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: 'Poppins', 'Poppins Fallback', system-ui, -apple-system, 'Segoe UI', sans-serif;
     color: var(--cf-ink);
 }
 
@@ -1241,7 +1241,7 @@
     flex-direction: column;
     gap: 6px;
     animation: cfSlide 0.25s ease-out;
-    font-family: 'Poppins', system-ui, sans-serif;
+    font-family: 'Poppins', 'Poppins Fallback', system-ui, sans-serif;
 }
 
 .cf-drawer a,

@@ -18,7 +18,7 @@
 }
 
 .fk-title small {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Poppins', 'Poppins Fallback', sans-serif;
     font-size: 1rem;
     color: var(--cf-muted);
     margin-left: 10px;

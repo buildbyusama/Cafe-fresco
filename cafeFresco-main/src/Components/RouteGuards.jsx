@@ -5,7 +5,7 @@ import productContext from '../Context/ProductContext';
 import { safeNext } from '../utils/safeNext';
 
 const Spinner = () => (
-    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 'calc(100vh - 72px)' }}>
         <div className="spinner-border text-danger" role="status"><span className="visually-hidden">Loading...</span></div>
     </div>
 );

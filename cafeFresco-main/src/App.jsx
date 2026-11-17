@@ -28,11 +28,15 @@ const Titled = ({ title, children }) => { useDocumentTitle(title); return childr
 
 // Unknown URLs get a real page instead of an empty layout
 const NotFound = () => (
-  <div className="container text-center py-5" style={{ marginTop: '80px', minHeight: '50vh' }}>
-    <h1 className="fw-bold">Page not found</h1>
-    <p className="text-muted">The page you are looking for doesn&apos;t exist.</p>
-    <Link to="/" className="btn btn-danger">Back to home</Link>
-  </div>
+  <section className="fh-wrap cf-notfound">
+    <div className="fh-script">oops</div>
+    <h1 className="fh-h2">Page not found</h1>
+    <p>The page you are looking for doesn&apos;t exist or has moved.</p>
+    <div className="cf-notfound-actions">
+      <Link to="/" className="fh-btn fh-btn-red">Back to home</Link>
+      <Link to="/products" className="fh-btn fh-btn-ghost">Browse the menu</Link>
+    </div>
+  </section>
 );
 
 function Layout() {
@@ -43,6 +47,8 @@ function Layout() {
       <Toaster position="top-center" reverseOrder={false} containerStyle={{ top: 84 }} />
 
       <Navbar />
+      {/* the page area is always at least one screen tall, so the footer never flashes up while a page loads */}
+      <div className="cf-page">
       <Routes>
         <Route path="/login" element={<Titled title="Login"><GuestOnly><Login /></GuestOnly></Titled>} />
         <Route path="/track" element={<Titled title="My orders"><RequireAuth><Track /></RequireAuth></Titled>} />
@@ -63,6 +69,7 @@ function Layout() {
         <Route path="/wishlist" element={<Titled title="Wishlist"><RequireAuth><Wishlist /></RequireAuth></Titled>} />
 
       </Routes>
+      </div>
       <Footer />
       <ChatLauncher />
     </>

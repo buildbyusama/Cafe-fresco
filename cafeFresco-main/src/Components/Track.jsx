@@ -14,10 +14,11 @@ const shortId = (id) => `#${String(id).slice(-6).toUpperCase()}`;
 const lineTitle = (line) => line.title || line.productId?.title || 'Removed product';
 const when = (d) => new Date(d).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 
-// Placed → Preparing (paid or COD) → Delivered; a cancelled order stops the line
+// Placed (still cancellable) → Preparing (paid, so it can no longer be cancelled) → Delivered.
+// Matches the Cancel button: an order that can still be cancelled is never shown as being prepared.
 const progress = (o) => {
     if (o.orderStatus === 'completed') return 3;
-    if (o.paymentStatus === 'paid' || o.paymentMethod !== 'card') return 2;
+    if (o.paymentStatus === 'paid') return 2;
     return 1;
 };
 

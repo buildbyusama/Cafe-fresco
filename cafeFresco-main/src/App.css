@@ -526,3 +526,88 @@ textarea:focus {
     padding: 0 44px 8px;
 }
 
+
+/* page area: at least a full screen below the navbar (stops the footer jumping while pages load) */
+.cf-page {
+  min-height: calc(100vh - 72px);
+  min-height: calc(100dvh - 72px);
+}
+
+/* Arial sized to match Poppins, so text doesn't re-wrap (and move the page) when the web font arrives */
+@font-face {
+  font-family: 'Poppins Fallback';
+  src: local('Arial');
+  size-adjust: 112.5%;
+  ascent-override: 93%;
+  descent-override: 31%;
+  line-gap-override: 9%;
+}
+
+/* phones: every tappable control at least 40 px (WCAG 2.5.8 / platform guidelines), without changing desktop */
+@media (max-width: 640px) {
+  .fh-cat-order {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 0.78rem;
+  }
+  .fk-qty button,
+  .fd-qty button {
+    width: 40px;
+    height: 40px;
+  }
+  .fk-qty input {
+    min-height: 40px;
+  }
+  .fk-remove {
+    min-height: 40px;
+    padding: 0 10px;
+  }
+  .fd-cat,
+  .fd-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+  }
+  .fm-crumbs a,
+  .fd-rating,
+  .fa-label-row a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+  }
+  .star-rating button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* 404 in the site theme */
+section.cf-notfound {
+  text-align: center;
+  padding-top: 96px;
+  padding-bottom: 96px;
+  font-family: 'Poppins', 'Poppins Fallback', system-ui, sans-serif;
+}
+.cf-notfound .fh-btn {
+  text-decoration: none;
+}
+.cf-notfound p {
+  color: var(--cf-muted, #8a7f73);
+  margin: 10px 0 24px;
+}
+.cf-notfound-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* phones: room at the very bottom so the floating chat button never hides the last line of a page */
+@media (max-width: 640px) {
+  footer.cf-footer {
+    padding-bottom: 84px;
+  }
+}

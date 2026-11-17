@@ -64,7 +64,7 @@ const rag = () => ({
     perDoc: 2,
     contextChars: 3500,
     // similarity cut-off; calibrated for the real model in step R2.2 (mock vectors use their own scale)
-    minScore: Number(process.env.RAG_MIN_SCORE || (process.env.AI_MOCK === 'true' ? 0.3 : 0.35)),
+    minScore: Number(process.env.RAG_MIN_SCORE || (process.env.AI_MOCK === 'true' ? 0.3 : 0.32)),
     dims: 512,
     ingestMode: process.env.INGEST_MODE || 'sync',
     budgetShare: 0.5,

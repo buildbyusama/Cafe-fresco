@@ -58,3 +58,21 @@ Every cache is size-capped, so memory stays bounded under load.
 - The Hobby plan's default function limit is 10 s, so very large documents are borderline there.
 - Set `maxDuration` to 60 on Pro, or split very long documents.
 - Typical guides (under 50 pages) take a couple of seconds.
+
+## Document search (RAG R2.2)
+
+**Threshold calibration** (real `text-embedding-3-small`, 512 dims, four fixture documents). The score is the best hybrid score, 0.75 × cosine + 0.25 × keyword overlap.
+
+| Questions | Best scores |
+|---|---|
+| 7 relevant (catering notice, deposit, birthday, hall size, spoiled food, refund time, vegetarian) | 0.367 – 0.691 (median 0.517) |
+| 7 unrelated (capital of France, car engine, joke, burger spice, opening time, Python, cricket) | 0.075 – 0.294 (median 0.121) |
+
+**Chosen `RAG_MIN_SCORE`: 0.32.** It sits between the weakest relevant match (0.367) and the strongest unrelated one (0.294). Test mode (`AI_MOCK`) uses 0.30 with its own word-hash vectors. Without AI, search is keyword-only and needs at least half the question's meaningful words in a passage.
+
+**Cross-language limitation.** An Urdu question about catering scored 0.217 against the English catering guide, below the threshold. Questions and documents in different languages often don't match. Upload documents in the language customers ask in, or upload both versions.
+
+**Speed and memory** (20,000 synthetic passages, test mode, the developer's laptop):
+- Vectors are held in one Float32Array: 39 MB.
+- The whole search cache, with text and keywords, takes about 60 MB.
+- One search takes 62 ms at p50 and 74 ms at p95, under the 100 ms target.

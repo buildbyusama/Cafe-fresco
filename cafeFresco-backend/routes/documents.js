@@ -12,6 +12,7 @@ const { isObjectId } = require('../utils/validation');
 const { rag } = require('../config/env');
 const { ingest, reindex } = require('../services/rag/ingest');
 const { deleteDocument, failStale, changed } = require('../services/rag/documents');
+const { retrieve } = require('../services/rag/retrieve'); // also registers the search-cache reset
 
 const managers = [isAdmin, authorizeRoles('admin', 'manager')];
 const uploadLimiter = rateLimit({
@@ -95,6 +96,18 @@ router.post('/:id/replace', ...managers, uploadLimiter, receiveFile, async (req,
         if (err?.code === 11000) return res.status(409).json({ message: 'This file is already uploaded.' });
         console.error('Document replace failed:', err);
         res.status(500).json({ message: 'Replace failed. Please try again.' });
+    }
+});
+
+// "Ask your documents": what the assistant would find for a question (published documents only)
+router.post('/test', ...managers, async (req, res) => {
+    try {
+        const question = String(req.body?.question || '').trim();
+        if (question.length < 2 || question.length > 500) return res.status(400).json({ message: 'Type a question (2–500 characters).' });
+        res.json(await retrieve(question));
+    } catch (err) {
+        console.error('Document test search failed:', err);
+        res.status(500).json({ message: 'Search failed. Please try again.' });
     }
 });
 

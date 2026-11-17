@@ -105,3 +105,4 @@ Tests live in `FYP/tests` (`npm i` once, then `node <file>.js`). `regression.js`
 | Step | Projects | Notes | Test |
 |---|---|---|---|
 | R0.1 | B | pdf-parse 2.4.5 (current pdf.js), mammoth 1.13.0, yauzl 3.4.0 (tests: pdfkit, docx). `config/env.js` `rag()` limits (4 MB on Vercel, `INGEST_MODE` validated, background refused on Vercel). `embed(texts, { dimensions })` (+ mock). Tool registry: per-tool `maxOutput`, `passages` shrink. Activity log maps `/documents`. README + `.env.example`. | `rag01.js` |
+| R1.1 | B | `models/document.js` (cleaned title ≤80, type enum, unique sha256, status processing/ready/failed/deleting, draft by default, privacy flags, version) and `models/docChunk.js` (versioned passages, hidden 512-number vectors, index documentId+version+order). `services/rag/documents.js`: `deleteDocument` (deleting status first, cascade, idempotent), age-based `failStale` (>10 min), cache-change hook. | `rag11.js` |

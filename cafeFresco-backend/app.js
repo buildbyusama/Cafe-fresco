@@ -38,6 +38,10 @@ app.set('trust proxy', 1);
 
 // Request id + access log first, so every later line (and error) is traceable
 app.use(requestContext);
+// activity log of admin changes + alert on bursts of server errors
+const { auditTrail, errorBurst } = require('./services/audit');
+app.use(auditTrail);
+app.use(errorBurst);
 
 // Security headers; images are fetched by the shop and dashboard from other origins
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -110,6 +114,7 @@ app.use('/reco', require('./routes/reco'));
 app.use('/chat/admin', require('./routes/chatAdmin'));
 app.use('/chat', require('./routes/chat'));
 app.use('/knowledge', require('./routes/knowledge'));
+app.use('/audit', require('./routes/audit'));
 
 // Unknown routes → JSON 404 (never an HTML page)
 app.use((req, res) => {
@@ -134,6 +139,12 @@ app.use((err, req, res, next) => {
 });
 
 // Connect first, then accept traffic (requests no longer hang during startup)
+// A crash-level error is logged and raised in the dashboard (once per 15 min)
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled promise rejection:', err);
+    require('./services/alerts').alert({ type: 'system_error', message: `Server error: ${String(err?.message || err).slice(0, 160)}`, key: 'unhandled', windowMs: 15 * 60 * 1000 });
+});
+
 const start = async () => {
     await connectDB();
     app.listen(PORT, () => {

@@ -23,6 +23,7 @@ export const routeRoles = {
     aiInsights: ADMIN_MANAGER,
     aiKnowledge: ADMIN_MANAGER,
     aiSettings: ADMIN,
+    activityLog: ADMIN,
     accessDenied: ALL
 };
 
@@ -67,7 +68,8 @@ const urlRouteKeys = [
     ['/admin/store-info', 'settings'],
     ['/admin/ai-insights', 'aiInsights'],
     ['/admin/ai-knowledge', 'aiKnowledge'],
-    ['/admin/ai-settings', 'aiSettings']
+    ['/admin/ai-settings', 'aiSettings'],
+    ['/admin/activity-log', 'activityLog']
 ];
 
 export const canAccessUrl = (role, url) => {

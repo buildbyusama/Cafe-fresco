@@ -34,6 +34,12 @@ const orderManagement = {
           type: 'item',
           url: '/admin/store-info',
         },
+        {
+          id: 'activity-log',
+          title: 'Activity Log',
+          type: 'item',
+          url: '/admin/activity-log',
+        },
 
       ]
     }

@@ -8,8 +8,18 @@ const MIN = 60 * 1000;
  * type: 'ai_error' | 'system_error' | 'payment_issue' | 'chat_escalation'
  * key + windowMs: skip if a notification with the same type+key was created within the window
  */
+// same-process guard: during a burst many calls arrive before the first one is saved
+const claimed = new Map();
+
 async function alert({ type, name = 'System', message, link = null, orderId = null, key = null, windowMs = 15 * MIN }) {
     try {
+        if (key) {
+            const k = `${type}:${key}`;
+            const at = claimed.get(k);
+            if (at && Date.now() - at < windowMs) return false;
+            claimed.set(k, Date.now());
+            if (claimed.size > 1000) claimed.delete(claimed.keys().next().value);
+        }
         if (key && (await Notify.exists({ type, key, time: { $gte: new Date(Date.now() - windowMs) } }))) return false;
         await Notify.create({ type, name, message: String(message).slice(0, 300), link, orderId, key });
         return true;

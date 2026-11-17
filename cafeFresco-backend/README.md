@@ -345,3 +345,10 @@ The chat assistant and smart search use OpenAI through `services/ai/client.js` (
 - Cost guard: `AI_DAILY_TOKEN_BUDGET` (default 2,000,000 tokens a day). Above it the assistant switches to rule-based answers until midnight (`APP_TZ`). Also set a monthly limit in your OpenAI account.
 - `AI_MOCK=true` gives scripted offline answers, used by the tests (`FYP/tests`). Never enable it in production; the server refuses to start if you do.
 - Every call has a timeout (`AI_TIMEOUT_MS`, default 20 s) and one retry on 429/5xx.
+
+## Monitoring
+
+- `GET /health` → `{status, db, ai, uptime}`; returns 503 when the database is down. Point any uptime monitor at it (for example a free UptimeRobot HTTP check every 5 minutes).
+- Logs are JSON lines (pino) with a `reqId` on every line; errors are `"level":50`.
+- The dashboard bell raises: AI outages / budget used up, payment problems, more than 10 server errors in a minute, and crash-level errors (each de-duplicated).
+- Dashboard → Activity Log (admin) lists every change made in the dashboard for a year.

@@ -50,12 +50,12 @@ const PARA = (s) => `Cafe Fresco catering ${s}: we serve weddings, birthdays and
         check('privacy flags → publishing needs confirmation (409)', noConfirm.status() === 409 && (await noConfirm.json()).needsConfirmation === true);
         check('with confirmPrivacy → published', (await ad.put(`/documents/${piiId}`, { data: { isPublished: true, confirmPrivacy: true } })).status() === 200);
         check('a failed document cannot be published (409)', (await ad.put(`/documents/${bad.j.document._id}`, { data: { isPublished: true } })).status() === 409);
-        check('rename cleans the title', (await (await ad.put(`/documents/${id}`, { data: { title: '  New <b>Title</b> ' } })).json()).document.title === 'New b Title /b');
+        check('rename cleans the title', (await (await ad.put(`/documents/${id}`, { data: { title: '  New <b>Title</b> ' } })).json()).document.title === 'New Title');
 
         // replace keeps title + published; failed replace keeps the old version serving
         const rep = await ad.post(`/documents/${id}/replace`, { multipart: file('v2.txt', `# Catering v2\n\n${PARA(`v2 ${t}`)}`) });
         const rj = (await rep.json()).document;
-        check('replace → new version serving, title and published kept', rep.status() === 200 && rj.servingVersion === 2 && rj.isPublished === true && rj.title === 'New b Title /b');
+        check('replace → new version serving, title and published kept', rep.status() === 200 && rj.servingVersion === 2 && rj.isPublished === true && rj.title === 'New Title');
         const failRep = await ad.post(`/documents/${id}/replace`, { multipart: file('broken.pdf', Buffer.concat([Buffer.from('%PDF-1.7\n'), Buffer.from('junk '.repeat(100))])) });
         const fj = (await failRep.json()).document;
         check('a broken replacement keeps version 2 answering, with the reason shown', fj.status === 'ready' && fj.servingVersion === 2 && /couldn't be used/.test(fj.error) && (await DocChunk.countDocuments({ documentId: id, version: 2 })) > 0);

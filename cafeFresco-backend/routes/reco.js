@@ -29,7 +29,11 @@ router.get('/for-me', async (req, res) => {
         res.set('Cache-Control', 'private, no-store');
         if (!personal) return send(res, ids, { personal });
         const products = await withStock(await reco.hydrate(ids));
-        const why = await polishReasons(`${userId || anonId}:${ids.join(',')}`, products.map((p) => ({ id: String(p._id), title: p.title, hint: reasons[String(p._id)] })));
+        const items = products.map((p) => ({ id: String(p._id), title: p.title, hint: reasons[String(p._id)] }));
+        // the row never waits long for the AI wording: after 600 ms the plain reasons go out, and the
+        // wording (still being written) is cached for the next visit
+        const plain = Object.fromEntries(items.map((i) => [i.id, i.hint]));
+        const why = await Promise.race([polishReasons(`${userId || anonId}:${ids.join(',')}`, items), new Promise((r) => setTimeout(() => r(plain), 600))]);
         res.json({ personal, products: products.map((p) => ({ ...p, reason: why[String(p._id)] })) });
     } catch (err) {
         fail(res, err, 'for-me');

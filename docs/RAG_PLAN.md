@@ -52,7 +52,7 @@
 | **R3. Cite or say "don't know"** | An answer that uses document text names the document. If no passage clears the calibrated threshold, the bot says it doesn't have that information. It never fills gaps from general knowledge. |
 | **R4. Document text and titles are data** | Passages **and titles** are cleaned (control characters, `<`, `>` removed; titles ≤ 80 chars) and wrapped as untrusted content (A5). Instructions inside them are ignored. The model never sees ids, file names or admin names. |
 | **R5. Bounded context** | At most 5 passages per answer, at most 2 per document, and at most 3,500 characters of passage text per turn. The tool registry gets a **per-tool output limit** so this budget isn't cut to the default 1,500 (fix #3). |
-| **R6. Safe parsing** | PDFs are read with **pdf-parse v2** (current pdf.js, script evaluation off), inside a **worker thread** with a hard 20 s kill, because CPU-bound parsing can't be stopped with a timer (fix #7). DOCX: the zip's central directory is read with **yauzl** first, and anything over 50 MB unpacked or 2,000 entries is refused before mammoth runs (fix #8). Encrypted or broken files are refused. |
+| **R6. Safe parsing** | PDFs are read with **pdf-parse v2** (current pdf.js, script evaluation off), in a **separate child process** with a hard 20 s kill: CPU-bound parsing can't be stopped with a timer (fix #7), and during R1.2 a malformed PDF **crashed pdf.js's native helper with a segmentation fault**, which in a worker thread takes the whole server down (fix #18). DOCX: the zip's central directory is read with **yauzl** first, and anything over 50 MB unpacked or 2,000 entries is refused before mammoth runs (fix #8). Encrypted or broken files are refused. |
 | **R7. Privacy check** | Uploaded text is scanned for things that look like personal data (emails, phone numbers, 13–19 digit runs, CNIC). Matches show as a warning badge, and publishing asks for an explicit confirmation. |
 | **R8. Works on Vercel** | Ingest runs **inside the upload request** (`INGEST_MODE=sync`, the default), because work after a response is frozen on Vercel (D9; fix #2). `INGEST_MODE=background` is allowed only on long-running servers. "Stuck" documents are detected by age (processing for over 10 minutes means failed), not by a server-start hook, which never fires reliably on serverless (fix #10). |
 | **R9. Budget-aware ingest** | Before embedding, the token cost is estimated (characters ÷ 4). If it would exceed **50% of today's remaining AI budget**, the upload is refused with a clear message, so one big document can't switch the chat to rule-based answers (fix #11). |
@@ -525,6 +525,7 @@ Each pass ends with:
 | 14 | Tests needed PDF and DOCX fixtures but no generator was listed | `pdfkit` and `docx` as test-only dependencies |
 | 15 | Document **titles** reach the model and could carry injection | Titles cleaned and wrapped like passage text (R4) |
 | 16 | "413/400" was ambiguous for oversized files | Fixed at 413 with a friendly message |
+| 18 | *(found while building R1.2)* A malformed PDF made pdf-parse's native helper **segfault**; in a worker thread that kills the server | PDF parsing moved to a child process; a crash only fails that upload |
 | 17 | Private data warning was only a badge | Publishing needs an explicit confirmation when flags exist (R7, R2.1, R4.1) |
 
 ---

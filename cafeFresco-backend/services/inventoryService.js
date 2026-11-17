@@ -33,7 +33,9 @@ async function adjustStock(productId, delta) {
     if (delta < 0) filter.quantityInStock = { $gte: -delta };
     const update = { $inc: { quantityInStock: delta }, $set: { lastUpdated: new Date() } };
     if (delta > 0) update.$set.restockDate = new Date();
-    return Inventory.findOneAndUpdate(filter, update, { new: true });
+    const inv = await Inventory.findOneAndUpdate(filter, update, { new: true });
+    if (inv) require('./responseCache').clear(); // stock shown on the menu changed
+    return inv;
 }
 
 // Absolute value (admin restock/correction); creates the inventory row if missing.

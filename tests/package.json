@@ -3,6 +3,7 @@
   "private": true,
   "description": "End-to-end and API tests. Run from this folder: node <file>.js (backend, shop and dashboard must be running)",
   "dependencies": {
+    "autocannon": "8.0.0",
     "playwright": "1.49.1"
   }
 }

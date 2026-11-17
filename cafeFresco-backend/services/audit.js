@@ -41,6 +41,7 @@ function auditTrail(req, res, next) {
     };
     res.on('finish', () => {
         if (!req.admin?.userId || res.statusCode >= 400) return;
+        require('./responseCache').clear(); // menu/category changes show at once
         const path = req.originalUrl.split('?')[0];
         const entity = entityOf(path);
         if (!entity) return; // sign-in, reading notifications: not changes

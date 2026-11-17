@@ -69,6 +69,8 @@ app.use(rateLimit({
     max: Number(process.env.API_RATE_LIMIT || 600),
     standardHeaders: true,
     legacyHeaders: false,
+    // load tests from this machine only (LOAD_TEST is refused in production by config/env.js)
+    skip: (req) => process.env.LOAD_TEST === 'true' && ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.ip),
     handler: (req, res) => res.status(429).json({ message: 'Too many requests, please slow down.' }),
 }));
 
@@ -94,8 +96,11 @@ app.get('/health', (req, res) => {
 
 app.use('/user', userRoutes);
 app.use('/admin', adminRoutes);
-app.use('/category', categoryRoutes)
-app.use('/product', productRoutes);
+// public catalogue reads are cached for 15 s (cleared on any admin change)
+const { responseCache } = require('./services/responseCache');
+const catalogueCache = responseCache(15000);
+app.use('/category', catalogueCache, categoryRoutes)
+app.use('/product', catalogueCache, productRoutes);
 app.use('/review', reviewRoutes);
 app.use('/cart', cartRoutes);
 app.use('/wishlist', wishRoutes);
@@ -110,7 +115,8 @@ app.use('/supplier', supplier);
 app.use('/distributer', distributer);
 app.use('/settings', settingsRoutes);
 app.use('/events', require('./routes/events'));
-app.use('/reco', require('./routes/reco'));
+// 'for-me' is personal: never shared-cached
+app.use('/reco', (req, res, next) => (req.path === '/for-me' ? next() : catalogueCache(req, res, next)), require('./routes/reco'));
 app.use('/chat/admin', require('./routes/chatAdmin'));
 app.use('/chat', require('./routes/chat'));
 app.use('/knowledge', require('./routes/knowledge'));

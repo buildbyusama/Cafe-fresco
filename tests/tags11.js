@@ -51,7 +51,7 @@ const { model, URL, ADMIN, check, connect, done, tag } = require('./lib');
         check('shop shows Vegetarian + Medium + #tags', /Vegetarian/.test(text) && /Medium/.test(text) && /#cheesy/.test(text));
         check('unverified allergens are NOT shown', !/Contains: dairy/.test(text) && /ask our staff/i.test(text));
         check('no invented delivery time when none is set', !/Delivered in/.test(text) || /Delivered in about \d+ mins/.test(text));
-        await Product.updateOne({ _id: id }, { allergensVerified: true });
+        await ad.put(`/product/update/${id}`, { multipart: { allergensVerified: 'true' } }); // like the dashboard: clears the catalogue cache
         await page.reload();
         await page.waitForTimeout(1500);
         text = await page.locator('.fd-info').innerText();

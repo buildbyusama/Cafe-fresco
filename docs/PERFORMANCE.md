@@ -1,0 +1,47 @@
+# Performance check (Step 6.4, SRS 5.1)
+
+**Target (SRS 5.1):** at least 500 concurrent users, with APIs answering in 200–500 ms.
+
+**Tool:** `tests/load64.js` (autocannon, 500 connections, 20 s per endpoint, 5 s pause between runs).
+
+**Machine and setup:**
+- the developer's Windows 11 laptop;
+- local MongoDB;
+- the backend started with `LOAD_TEST=true` (localhost bypasses the rate limiter; refused in production) and `LOG_LEVEL=warn`;
+- a single Node process.
+
+## Results
+
+| Endpoint | Before: req/s | Before: p97.5 | Before: errors | After: req/s | After: p50 | After: p97.5 | After: p99 | After: errors |
+|---|---|---|---|---|---|---|---|---|
+| `/product/fetch?limit=16&sort=recommended` | 313 | 1,983 ms | 0 | **5,964** | 67 ms | **86 ms** | 314 ms | 0 |
+| `/category/fetch` | 1,302 | 8,668 ms | 3,075 timeouts | **10,189** | 46 ms | **64 ms** | 70 ms | 0 |
+| `/reco/trending` | 836 | 5,027 ms | 862 timeouts | **9,037** | 46 ms | **63 ms** | 104 ms | 0 |
+| `/settings/public` | 10,373 | 638 ms | 1,742 | **10,009** | 48 ms | **60 ms** | 62 ms | 0 |
+| `/health` | 10,261 | 62 ms | 0 | 9,930 | 49 ms | 59 ms | 64 ms | 0 |
+
+"After" is with the response cache described below.
+
+**Result:** all the listed endpoints meet the target at 500 concurrent connections, with no errors.
+
+## What changed
+
+- **`services/responseCache.js`:** the public catalogue reads (`/product/*`, `/category/*`, `/reco/*` except `for-me`) are served from memory for up to 15 s, and the response carries an `X-Cache` header.
+  - Admin requests are never cached.
+  - Personal routes are never cached (`/reco/for-me`, cart, chat, orders, account).
+  - The cache is cleared at once on any admin change (from the activity-log middleware) and on any stock change (`adjustStock`), so prices, availability and stock are never more than one request out of date.
+  - It holds at most 500 entries.
+- **Existing caches stay as they were:**
+  - store settings: 60 s;
+  - recommendation lists: 5 min, cleared on product change;
+  - search vectors: 5 min;
+  - query embeddings: LRU of 500.
+- **Load-test bypass:** the general rate limiter skips localhost when `LOAD_TEST=true`.
+
+Every cache is size-capped, so memory stays bounded under load.
+
+## Not measured here
+
+- **Chat under load.** It costs money per message with a real key. The rule-based path is the same code as the tools and is covered by `chat33.js` and `chat34.js`.
+- **Lighthouse page speed.** It needs a production build served by `vite preview` on the deployment target; run it after deploying.
+- **Uptime (SRS 5.2, 99.9%).** It depends on the hosting; point an uptime monitor at `GET /health`.
